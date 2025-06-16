@@ -1,0 +1,86 @@
+// This file contains the Prisma schema for the User, Teacher, Student, Parent, and Student_Parent_Relation models
+
+model User {
+  id         String   @id @db.VarChar(255)
+  username   String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(255)
+  email      String?  @db.VarChar(255)
+  phone      String?  @db.VarChar(20)
+  avatar     String?  @db.VarChar(255)
+  role       Int      @db.TinyInt  // 0: User, 1: Teacher, 2: Student, 3: Parent, 4: Admin
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  status     Boolean  @default(true)
+  teachers   Teacher[]
+  students   Student[]
+  parents    Parent[]
+  password_reset_tokens Password_Reset_Token[]
+}
+
+model Teacher {
+  id            String   @id @db.VarChar(255)
+  user_id       String   @db.VarChar(255)
+  full_name     String   @db.VarChar(255)
+  gender        Int      @default(2) @db.TinyInt // 0: Male, 1: Female, 2: Other
+  date_of_birth DateTime? @db.Date
+  address       String?  @db.Text
+  qualification String?  @db.Text
+  hire_date     DateTime? @db.Date
+  status        Int      @default(1) @db.TinyInt // 0: inactive, 1: active
+  zalo_id       String?  @db.VarChar(255)
+  facebook_id   String?  @db.VarChar(255)
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  class_teachers Class_Teacher[]
+  class_sessions Class_Session[]
+  attendance Attendance[]
+}
+
+model Student {
+  id                 String   @id @db.VarChar(255)
+  user_id            String   @db.VarChar(255)
+  full_name          String   @db.VarChar(255)
+  gender             Int      @default(2) @db.TinyInt
+  date_of_birth      DateTime? @db.Date
+  address            String?  @db.Text
+  enrollment_date    DateTime? @db.Date
+  status             Int      @default(1) @db.TinyInt
+  discount_percentage Decimal    @default(0) @db.Decimal(5, 2)
+  discount_reason    String?  @db.Text
+  user               User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  student_parent_relations Student_Parent_Relation[]
+  class_enrollments Class_Enrollment[]
+  attendance Attendance[]
+}
+
+model Parent {
+  id           String   @id @db.VarChar(255)
+  user_id      String   @db.VarChar(255)
+  full_name    String   @db.VarChar(255)
+  phone        String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  address      String?  @db.Text
+  status       Int      @default(1) @db.TinyInt
+  relationship String?  @db.VarChar(100)
+  zalo_id      String?  @db.VarChar(255)
+  facebook_id  String?  @db.VarChar(255)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  student_parent_relations Student_Parent_Relation[]
+}
+
+model Student_Parent_Relation {
+  id         String  @id @db.VarChar(255)
+  student_id String  @db.VarChar(255)
+  parent_id  String  @db.VarChar(255)
+  is_primary Boolean @default(false)
+  student    Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  parent     Parent  @relation(fields: [parent_id], references: [id], onDelete: Cascade)
+}
+
+model Password_Reset_Token {
+    id         String   @id @db.VarChar(255)
+    user_id    String   @db.VarChar(255)
+    otp_code   String   @db.VarChar(6)
+    created_at DateTime @default(now()) @db.Timestamp(0)
+    expires_at DateTime @db.Timestamp(0)
+    user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

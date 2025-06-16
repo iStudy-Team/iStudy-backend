@@ -1,0 +1,215 @@
+//******** AUTO GENERATED FILE, DO NOT EDIT.  *********
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output = "../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+// Prisma models for academic, class, and attendance management
+
+model Academic_Year {
+  id           String   @id @db.VarChar(255)
+  school_year  String   @unique @db.VarChar(20)
+  start_date   DateTime?
+  end_date     DateTime?
+  status       Int      @default(0) // 0: Inactive, 1: Active, 2: Completed
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  classes      Class[]
+}
+
+model Grade_Level {
+  id          String   @id @db.VarChar(255)
+  name        String   @unique @db.VarChar(255)
+  description String?
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  classes     Class[]
+}
+
+model Schedule {
+  id         String   @id @db.VarChar(255)
+  class_id    String   @db.VarChar(255)
+  day        DateTime? @db.Date
+  start_time  DateTime? @db.Time
+  end_time    DateTime? @db.Time
+
+  class      Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@map("Schedule") // tên bảng trong DB
+}
+
+model Class {
+  id                String            @id @db.VarChar(255)
+  academic_year_id  String
+  grade_level_id    String
+  name              String            @unique @db.VarChar(255)
+  capacity          Int?
+  tuition_fee       String?
+  start_date        DateTime?
+  end_date          DateTime?
+  status            Int               @default(0) // 0: open, 1: close, 2: completed
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  academic_year     Academic_Year     @relation(fields: [academic_year_id], references: [id])
+  grade_level       Grade_Level       @relation(fields: [grade_level_id], references: [id])
+  class_teachers    Class_Teacher[]
+  class_enrollments Class_Enrollment[]
+  class_sessions    Class_Session[]
+  schedule         Schedule[]
+}
+
+model Class_Teacher {
+  id         String   @id @db.VarChar(255)
+  class_id   String
+  teacher_id String
+  role       Int      @default(0) // 0: Main Teacher, 1: Assistant Teacher, 2: Substitute Teacher
+  start_date DateTime?
+  end_date   DateTime?
+  status     Int      @default(1) // 0: Inactive, 1: Active
+  class      Class    @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  teacher    Teacher  @relation(fields: [teacher_id], references: [id])
+}
+
+model Class_Enrollment {
+  id                  String   @id @db.VarChar(255)
+  class_id            String
+  student_id          String
+  enrollment_date     DateTime
+  end_date            DateTime?
+  status              Int      @default(1) // 0: Inactive, 1: Active, 2: Completed
+  tuition_fee         String?
+  original_fee        String?
+  discount_percentage Float    @default(0)
+  class               Class    @relation(fields: [class_id], references: [id])
+  student             Student  @relation(fields: [student_id], references: [id])
+}
+
+model Class_Session {
+  id           String   @id @db.VarChar(255)
+  class_id     String
+  teacher_id   String
+  date         DateTime
+  start_time   DateTime
+  end_time     DateTime
+  topic        String?
+  description  String?
+  status       Int      @default(0) // 0: Scheduled, 1: Completed, 2: Canceled
+  cancel_reason String?
+  class        Class    @relation(fields: [class_id], references: [id])
+  teacher      Teacher  @relation(fields: [teacher_id], references: [id])
+  attendances  Attendance[]
+}
+
+model Attendance {
+  id               String   @id @db.VarChar(255)
+  class_session_id String
+  student_id       String
+  status           Int      // 0: Present, 1: Absent, 2: Late, 3: Excused
+  comment          String?
+  recorded_by      String
+  recorded_at      DateTime @default(now())
+  class_session    Class_Session @relation(fields: [class_session_id], references: [id], onDelete: Cascade)
+  student          Student  @relation(fields: [student_id], references: [id])
+  teacher          Teacher  @relation(fields: [recorded_by], references: [id])
+}
+
+
+// This file contains the Prisma schema for the User, Teacher, Student, Parent, and Student_Parent_Relation models
+
+model User {
+  id         String   @id @db.VarChar(255)
+  username   String   @unique @db.VarChar(255)
+  password   String   @db.VarChar(255)
+  email      String?  @db.VarChar(255)
+  phone      String?  @db.VarChar(20)
+  avatar     String?  @db.VarChar(255)
+  role       Int      @db.TinyInt  // 0: User, 1: Teacher, 2: Student, 3: Parent, 4: Admin
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
+  status     Boolean  @default(true)
+  teachers   Teacher[]
+  students   Student[]
+  parents    Parent[]
+  password_reset_tokens Password_Reset_Token[]
+}
+
+model Teacher {
+  id            String   @id @db.VarChar(255)
+  user_id       String   @db.VarChar(255)
+  full_name     String   @db.VarChar(255)
+  gender        Int      @default(2) @db.TinyInt // 0: Male, 1: Female, 2: Other
+  date_of_birth DateTime? @db.Date
+  address       String?  @db.Text
+  qualification String?  @db.Text
+  hire_date     DateTime? @db.Date
+  status        Int      @default(1) @db.TinyInt // 0: inactive, 1: active
+  zalo_id       String?  @db.VarChar(255)
+  facebook_id   String?  @db.VarChar(255)
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  class_teachers Class_Teacher[]
+  class_sessions Class_Session[]
+  attendance Attendance[]
+}
+
+model Student {
+  id                 String   @id @db.VarChar(255)
+  user_id            String   @db.VarChar(255)
+  full_name          String   @db.VarChar(255)
+  gender             Int      @default(2) @db.TinyInt
+  date_of_birth      DateTime? @db.Date
+  address            String?  @db.Text
+  enrollment_date    DateTime? @db.Date
+  status             Int      @default(1) @db.TinyInt
+  discount_percentage Decimal    @default(0) @db.Decimal(5, 2)
+  discount_reason    String?  @db.Text
+  user               User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  student_parent_relations Student_Parent_Relation[]
+  class_enrollments Class_Enrollment[]
+  attendance Attendance[]
+}
+
+model Parent {
+  id           String   @id @db.VarChar(255)
+  user_id      String   @db.VarChar(255)
+  full_name    String   @db.VarChar(255)
+  phone        String?  @db.VarChar(20)
+  email        String?  @db.VarChar(255)
+  address      String?  @db.Text
+  status       Int      @default(1) @db.TinyInt
+  relationship String?  @db.VarChar(100)
+  zalo_id      String?  @db.VarChar(255)
+  facebook_id  String?  @db.VarChar(255)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  student_parent_relations Student_Parent_Relation[]
+}
+
+model Student_Parent_Relation {
+  id         String  @id @db.VarChar(255)
+  student_id String  @db.VarChar(255)
+  parent_id  String  @db.VarChar(255)
+  is_primary Boolean @default(false)
+  student    Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  parent     Parent  @relation(fields: [parent_id], references: [id], onDelete: Cascade)
+}
+
+model Password_Reset_Token {
+    id         String   @id @db.VarChar(255)
+    user_id    String   @db.VarChar(255)
+    otp_code   String   @db.VarChar(6)
+    created_at DateTime @default(now()) @db.Timestamp(0)
+    expires_at DateTime @db.Timestamp(0)
+    user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
