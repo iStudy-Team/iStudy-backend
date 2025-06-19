@@ -12,12 +12,14 @@ import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { GetScheduleDto } from './dto/get-schedule.dto';
 import { GetScheduleByMultipleClassDto } from './dto/get-schedule-by-multiple-class.dto';
+import { ClassSessionService } from '../class-session/class-session.service';
 
 @Injectable()
 export class ScheduleService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly generateIdService: GenerateIdService
+        private readonly generateIdService: GenerateIdService,
+        private readonly classSessionService: ClassSessionService
     ) {}
 
     async createSchedule(user: User, createScheduleDto: CreateScheduleDto) {
@@ -33,6 +35,17 @@ export class ScheduleService {
         const classExists = await this.prisma.class.findFirst({
             where: {
                 id: class_id,
+            },
+            include: {
+                class_teachers: {
+                    include: {
+                        teacher: {
+                            select: {
+                                id: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
@@ -55,6 +68,26 @@ export class ScheduleService {
         }
 
         try {
+            const teacherId = classExists.class_teachers.find(
+                (ct) => ct.role === 0
+            )?.teacher.id;
+            if (!teacherId) {
+                throw new NotFoundException(
+                    'Main teacher not found for the class'
+                );
+            } else {
+                await this.classSessionService.create(
+                    {
+                        class_id,
+                        date: day,
+                        start_time,
+                        end_time,
+                        teacher_id: teacherId,
+                        topic: 'Session for ' + classExists.name,
+                    },
+                    user
+                );
+            }
             return await this.prisma.schedule.create({
                 data: {
                     id: this.generateIdService.generateId(),
@@ -152,7 +185,24 @@ export class ScheduleService {
                     day: getScheduleDto.day,
                 },
                 include: {
-                    class: true,
+                    class: {
+                        include: {
+                            class_sessions: {
+                                select: {
+                                    topic: true,
+                                    start_time: true,
+                                    end_time: true,
+                                    date: true,
+                                    teacher: {
+                                        select: {
+                                            id: true,
+                                            full_name: true,
+                                        },
+                                    },
+                                }
+                            }
+                        }
+                    },
                 },
                 orderBy: {
                     start_time: 'asc',

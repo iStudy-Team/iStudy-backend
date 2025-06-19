@@ -20,3 +20,22 @@ export enum ClassTeacherStatusEnum {
     INACTIVE = 0,
     ACTIVE = 1,
 }
+
+export enum ClassEnrollmentStatusEnum {
+    INACTIVE = 0,
+    ACTIVE = 1,
+    COMPLETED = 2,
+}
+
+export enum AttendanceStatusEnum {
+    PRESENT = 0,
+    ABSENT = 1,
+    LATE = 2,
+    EXCUSED = 3,
+}
+
+export enum ClassSessionStatusEnum {
+    SCHEDULED = 0,
+    COMPLETED = 1,
+    CANCELLED = 2,
+}

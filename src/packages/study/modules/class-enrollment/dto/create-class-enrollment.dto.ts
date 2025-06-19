@@ -1,20 +1,13 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-    ClassTeacherStatusEnum,
-    ClassTeacherRoleEnum,
-} from '../../types/study.types';
+import { ClassEnrollmentStatusEnum } from '../../types/study.types';
 
-export const CreateClassTeacherSchema = z.object({
+export const CreateClassEnrollmentSchema = z.object({
     class_id: z.string().min(1, {
         message: 'Class ID must be a non-empty string',
     }),
-    teacher_id: z.string().min(1, {
-        message: 'Teacher ID must be a non-empty string',
-    }),
-    role: z.number().min(0).max(2),
-    start_date: z
+    enrollment_date: z
         .string()
         .optional()
         .refine(
@@ -46,11 +39,18 @@ export const CreateClassTeacherSchema = z.object({
             }
         )
         .optional(),
-    status: z.number().max(1).default(ClassTeacherStatusEnum.ACTIVE).optional(),
+    status: z
+        .number()
+        .max(2)
+        .default(ClassEnrollmentStatusEnum.ACTIVE)
+        .optional(),
+    tuition_fee: z.string().optional(),
+    original_fee: z.string().optional(),
+    discount_percentage: z.number().min(0).max(100).optional(),
 });
 
-export class CreateClassTeacherDto extends createZodDto(
-    CreateClassTeacherSchema
+export class CreateClassEnrollmentDto extends createZodDto(
+    CreateClassEnrollmentSchema
 ) {
     @ApiProperty({
         description: 'ID of the class',
@@ -58,25 +58,13 @@ export class CreateClassTeacherDto extends createZodDto(
         required: true,
     })
     class_id: string;
-    @ApiProperty({
-        description: 'ID of the teacher',
-        example: 'teacher_67890',
-        required: true,
-    })
-    teacher_id: string;
-    @ApiProperty({
-        description: 'Role of the teacher in the class',
-        example: ClassTeacherRoleEnum.MAIN_TEACHER,
-        required: true,
-    })
-    role: ClassTeacherRoleEnum;
 
     @ApiProperty({
-        description: 'Start date of the class in ISO format',
+        description: 'Enrollment date of the class in ISO format',
         example: '2024-09-01T00:00:00.000Z',
         required: false,
     })
-    start_date?: string;
+    enrollment_date?: string;
 
     @ApiProperty({
         description: 'End date of the class in ISO format',
@@ -86,9 +74,30 @@ export class CreateClassTeacherDto extends createZodDto(
     end_date?: string;
 
     @ApiProperty({
-        description: 'Status of the class (0 =INACTIVE, 1 = ACTIVE)',
-        example: ClassTeacherStatusEnum.ACTIVE,
+        description: 'Status of the class (0 =INACTIVE, 1 = ACTIVE, 2 = COMPLETED)',
+        example: ClassEnrollmentStatusEnum.ACTIVE,
         required: false,
     })
-    status?: ClassTeacherStatusEnum;
+    status?: ClassEnrollmentStatusEnum;
+
+    @ApiProperty({
+        description: 'Tuition fee for the class',
+        example: '1000.00',
+        required: false,
+    })
+    tuition_fee?: string;
+
+    @ApiProperty({
+        description: 'Original fee for the class',
+        example: '1200.00',
+        required: false,
+    })
+    original_fee?: string;
+
+    @ApiProperty({
+        description: 'Discount percentage for the class',
+        example: 10,
+        required: false,
+    })
+    discount_percentage?: number;
 }
