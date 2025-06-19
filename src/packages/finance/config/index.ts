@@ -1,0 +1,1 @@
+export const PAYMENT_SYSTEM_CODE = 'ISTUDY';

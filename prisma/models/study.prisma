@@ -50,6 +50,7 @@ model Class {
   class_enrollments Class_Enrollment[]
   class_sessions    Class_Session[]
   schedule         Schedule[]
+  invoid         Invoice[]
 }
 
 model Class_Teacher {

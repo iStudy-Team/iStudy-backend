@@ -189,10 +189,10 @@ CREATE TABLE Attendance (
 );
 
 -- Bảng Invoices
-CREATE TABLE Invoices (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    student_id INT NOT NULL,
-    class_id INT NOT NULL,
+CREATE TABLE Invoice (
+    id VARCHAR(255) PRIMARY KEY,
+    student_id VARCHAR(255) NOT NULL,
+    class_id VARCHAR(255) NOT NULL,
     invoice_number VARCHAR(50) UNIQUE NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,
@@ -201,38 +201,26 @@ CREATE TABLE Invoices (
     final_amount DECIMAL(10, 2) NOT NULL,
     issue_date DATE NOT NULL,
     due_date DATE NOT NULL,
-    status ENUM(
-        'pending',
-        'partial',
-        'paid',
-        'overdue',
-        'canceled'
-    ) DEFAULT 'pending',
+    status TINYINT DEFAULT 0, -- 0: Unpaid, 1: Paid, 2: Overdue, 3: Canceled
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (student_id) REFERENCES Students (id),
-    FOREIGN KEY (class_id) REFERENCES Classes (id)
+    FOREIGN KEY (student_id) REFERENCES Student (id),
+    FOREIGN KEY (class_id) REFERENCES Class (id)
 );
 
 -- Bảng Payments
-CREATE TABLE Payments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    invoice_id INT NOT NULL,
+CREATE TABLE Payment (
+    id VARCHAR(255) PRIMARY KEY,
+    invoice_id VARCHAR(255) NOT NULL,
     payment_date DATE NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    payment_method ENUM(
-        'cash',
-        'bank_transfer',
-        'credit_card',
-        'other'
-    ) NOT NULL,
     reference_number VARCHAR(100),
-    received_by INT NOT NULL,
+    received_by VARCHAR(255) NOT NULL,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (invoice_id) REFERENCES Invoices (id),
-    FOREIGN KEY (received_by) REFERENCES Users (id)
+    FOREIGN KEY (invoice_id) REFERENCES Invoice (id),
+    FOREIGN KEY (received_by) REFERENCES User (id)
 );
 
 -- Bảng Teacher_Salaries
