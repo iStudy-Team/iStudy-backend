@@ -4,11 +4,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { GenerateIdService } from 'src/common/services/generate-id.services';
 import { PaymentService } from './payment.service';
 import { PaymentController } from './payment.controller';
-import { InvoiceModule } from '../invoice/invoice.module';
-
+import { SePayService } from '../sepay/sepay.service';
 @Module({
-    imports: [AuthModule, InvoiceModule],
-    providers: [PrismaService, GenerateIdService, PaymentService],
+    imports: [AuthModule],
+    providers: [PrismaService, GenerateIdService, PaymentService, SePayService],
     exports: [PaymentService],
     controllers: [PaymentController],
 })
