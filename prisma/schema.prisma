@@ -17,6 +17,44 @@ datasource db {
 }
 
 
+model Invoice {
+  id             String    @id @db.VarChar(255)
+  student_id     String    @db.VarChar(255)
+  class_id       String    @db.VarChar(255)
+  invoice_number String    @unique @db.VarChar(50)
+  month          Int
+  year           Int
+  amount         Decimal   @db.Decimal(10, 2)
+  discount_amount Decimal  @default(0) @db.Decimal(10, 2)
+  final_amount   Decimal   @db.Decimal(10, 2)
+  issue_date     DateTime  @db.Date
+  due_date       DateTime  @db.Date
+  status         Int       @default(0) // 0: Unpaid, 1: Paid, 2: Overdue, 3: Canceled
+  description    String?   @db.Text
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  student        Student   @relation(fields: [student_id], references: [id])
+  class          Class     @relation(fields: [class_id], references: [id])
+  payments       Payment[]
+}
+
+model Payment {
+  id               String    @id @db.VarChar(255)
+  invoice_id       String    @db.VarChar(255)
+  payment_date     DateTime  @db.Date
+  amount           Decimal   @db.Decimal(10, 2)
+  reference_number String?   @db.VarChar(100)
+  received_by      String    @db.VarChar(255)
+  status           Int       @default(0) // 0: Unpaid, 1: Paid, 2: Overdue, 3: Canceled
+  notes            String?   @db.Text
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+
+  invoice          Invoice   @relation(fields: [invoice_id], references: [id])
+  receivedBy       User      @relation(fields: [received_by], references: [id])
+}
+
+
 // Prisma models for academic, class, and attendance management
 
 model Academic_Year {
@@ -69,6 +107,7 @@ model Class {
   class_enrollments Class_Enrollment[]
   class_sessions    Class_Session[]
   schedule         Schedule[]
+  invoid         Invoice[]
 }
 
 model Class_Teacher {
@@ -144,6 +183,7 @@ model User {
   students   Student[]
   parents    Parent[]
   password_reset_tokens Password_Reset_Token[]
+  payment Payment[]
 }
 
 model Teacher {
@@ -179,6 +219,7 @@ model Student {
   student_parent_relations Student_Parent_Relation[]
   class_enrollments Class_Enrollment[]
   attendance Attendance[]
+  invoices Invoice[]
 }
 
 model Parent {

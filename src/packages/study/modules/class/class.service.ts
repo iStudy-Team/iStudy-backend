@@ -194,6 +194,26 @@ export class ClassService {
                             },
                         },
                     },
+                    class_enrollments: {
+                        include: {
+                            student: {
+                                select: {
+                                    id: true,
+                                    full_name: true,
+                                },
+                                include: {
+                                    user: {
+                                        select: {
+                                            id: true,
+                                            email: true,
+                                            phone: true,
+                                            avatar: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
                 },
                 skip,
                 take: dto.limit || 10,
@@ -221,6 +241,26 @@ export class ClassService {
                 class_teachers: {
                     include: {
                         teacher: {
+                            select: {
+                                id: true,
+                                full_name: true,
+                            },
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        email: true,
+                                        phone: true,
+                                        avatar: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                class_enrollments: {
+                    include: {
+                        student: {
                             select: {
                                 id: true,
                                 full_name: true,
@@ -317,6 +357,26 @@ export class ClassService {
                 class_teachers: {
                     include: {
                         teacher: {
+                            select: {
+                                id: true,
+                                full_name: true,
+                            },
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        email: true,
+                                        phone: true,
+                                        avatar: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                class_enrollments: {
+                    include: {
+                        student: {
                             select: {
                                 id: true,
                                 full_name: true,
