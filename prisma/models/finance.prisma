@@ -27,6 +27,7 @@ model Payment {
   amount           Decimal   @db.Decimal(10, 2)
   reference_number String?   @db.VarChar(100)
   received_by      String    @db.VarChar(255)
+  status           Int       @default(0) // 0: Unpaid, 1: Paid, 2: Overdue, 3: Canceled
   notes            String?   @db.Text
   created_at       DateTime  @default(now()) @db.Timestamp(6)
 

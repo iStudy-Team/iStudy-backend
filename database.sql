@@ -218,6 +218,7 @@ CREATE TABLE Payment (
     reference_number VARCHAR(100),
     received_by VARCHAR(255) NOT NULL,
     notes TEXT,
+    status TINYINT DEFAULT 0, -- 0: Unpaid, 1: Paid, 2: Overdue, 3: Canceled
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (invoice_id) REFERENCES Invoice (id),
     FOREIGN KEY (received_by) REFERENCES User (id)

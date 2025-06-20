@@ -6,6 +6,7 @@ import {
     Get,
     UseGuards,
     Req,
+    Put,
 } from '@nestjs/common';
 import {
     ApiResponse,
@@ -76,5 +77,19 @@ export class PaymentController {
         @Param('id') id: string
     ) {
         return this.paymentService.findOne(id, req.user);
+    }
+
+    @Put(':id')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT')
+    @ApiOperation({ summary: 'Update a payment by ID' })
+    @ApiParam({ name: 'id', type: String, description: 'Payment ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Payment updated successfully',
+        type: CreatePaymentDto,
+    })
+    async updatePayment(@Param('id') id: string) {
+        return this.paymentService.updatePaymentStatusToOverDue(id);
     }
 }

@@ -11,14 +11,14 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { SearchPaymentsDto } from './dto/search-payment.dto';
 import { User } from '@prisma/client';
 import { InvoiceStatusEnum } from '../../types/invoice';
-import { InvoiceService } from '../invoice/invoice.service';
+import { SePayService } from '../sepay/sepay.service';
 
 @Injectable()
 export class PaymentService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly generateIdService: GenerateIdService,
-        private readonly invoiceService: InvoiceService
+        private readonly sePayService: SePayService
     ) {}
 
     async create(createPaymentDto: CreatePaymentDto, user: User) {
@@ -35,6 +35,36 @@ export class PaymentService {
         if (existingPayment?.status === InvoiceStatusEnum.PAID) {
             throw new ConflictException('This invoice has already been paid');
         }
+
+        const invoice = await this.prisma.invoice.findUnique({
+            where: { id: createPaymentDto.invoice_id },
+        });
+
+        if (!invoice) {
+            throw new NotFoundException('Invoice not found');
+        }
+
+        if (existingPayment?.status === InvoiceStatusEnum.UNPAID) {
+            const dataQR = await this.sePayService.createQR(
+                Number(invoice.final_amount),
+                existingPayment.id
+            );
+
+            return {
+                ...existingPayment,
+                invoice: {
+                    id: invoice.id,
+                    student_id: invoice.student_id,
+                    status: invoice.status,
+                    final_amount: invoice.final_amount,
+                },
+                receivedBy: {
+                    id: user.id,
+                    username: user.username,
+                },
+                dataQR,
+            };
+        }
         try {
             const payment = await this.prisma.payment.create({
                 data: {
@@ -46,11 +76,25 @@ export class PaymentService {
                 },
             });
 
-            await this.invoiceService.update(createPaymentDto.invoice_id, {
-                status: InvoiceStatusEnum.PAID,
-            });
+            const dataQR = await this.sePayService.createQR(
+                Number(invoice.final_amount),
+                payment.id
+            );
 
-            return payment;
+            return {
+                ...payment,
+                invoice: {
+                    id: invoice.id,
+                    student_id: invoice.student_id,
+                    status: invoice.status,
+                    final_amount: invoice.final_amount,
+                },
+                receivedBy: {
+                    id: user.id,
+                    username: user.username,
+                },
+                dataQR,
+            };
         } catch (error) {
             throw new InternalServerErrorException('Failed to create payment');
         }
@@ -157,6 +201,23 @@ export class PaymentService {
             return payment;
         } catch (error) {
             throw new InternalServerErrorException('Failed to fetch payment');
+        }
+    }
+
+    async updatePaymentStatusToOverDue(paymentId: string) {
+        try {
+            const payment = await this.prisma.payment.update({
+                where: { id: paymentId },
+                data: { status: InvoiceStatusEnum.OVERDUE },
+            });
+            if (!payment) {
+                throw new NotFoundException('Payment not found');
+            }
+            return payment;
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Failed to update payment status'
+            );
         }
     }
 }
