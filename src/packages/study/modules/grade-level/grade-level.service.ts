@@ -24,7 +24,10 @@ export class GradeLevelService {
         user: User
     ) {
         const existingGradeLevel = await this.prisma.grade_Level.findFirst({
-            where: { name: createGradeLevelDto.name },
+            where: {
+                name: createGradeLevelDto.name,
+                academic_year_id: createGradeLevelDto.academic_year_id,
+            },
         });
 
         if (existingGradeLevel) {
@@ -43,6 +46,10 @@ export class GradeLevelService {
                     ...createGradeLevelDto,
                     id: this.generateIdService.generateId(),
                 },
+                include: {
+                    classes: true, // Include related classes
+                    academic_year: true, // Include related academic year
+                }
             });
             return GradeLevel;
         } catch (error) {
@@ -104,6 +111,7 @@ export class GradeLevelService {
             where: { id },
             include: {
                 classes: true,
+                academic_year: true,
             },
         });
 
@@ -142,21 +150,31 @@ export class GradeLevelService {
         }
     }
 
-    async getAllGradeLevels() {
+    async getAllGradeLevels(page: number = 1, limit: number = 10) {
+        const skip = Number((page - 1) * limit);
+        const take = Number(limit);
         const GradeLevels = await this.prisma.grade_Level.findMany({
             include: {
                 classes: true, // Include related classes
+                academic_year: true, // Include related academic year
             },
             orderBy: {
                 created_at: 'desc', // Order by creation date
             },
+            skip,
+            take,
         });
 
         if (GradeLevels.length === 0) {
             throw new NotFoundException('Not found');
         }
 
-        return GradeLevels;
+        return {
+            data: GradeLevels,
+            totalCount: await this.prisma.grade_Level.count(),
+            page,
+            limit,
+        };
     }
 
     async searchGradeLevels(
@@ -180,6 +198,7 @@ export class GradeLevelService {
             take: limit,
             include: {
                 classes: true,
+                academic_year: true,
             },
             orderBy: {
                 created_at: 'desc',

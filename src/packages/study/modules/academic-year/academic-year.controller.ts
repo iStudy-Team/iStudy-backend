@@ -8,6 +8,7 @@ import {
     Delete,
     UseGuards,
     Req,
+    Query,
 } from '@nestjs/common';
 import {
     ApiResponse,
@@ -119,8 +120,11 @@ export class AcademicYearController {
         description: 'List of all academic years.',
         type: [CreateAcademicYearDto],
     })
-    async findAll() {
-        return this.academicYearService.getAllAcademicYears();
+    async findAll(@Query() dto: SearchAcademicYearsDto) {
+        return this.academicYearService.getAllAcademicYears(
+            dto.page,
+            dto.limit
+        );
     }
 
     @Post('search/:searchTerm')

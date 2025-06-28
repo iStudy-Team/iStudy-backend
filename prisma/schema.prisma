@@ -66,15 +66,18 @@ model Academic_Year {
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
   classes      Class[]
+  grade_levels Grade_Level[]
 }
 
 model Grade_Level {
   id          String   @id @db.VarChar(255)
   name        String   @unique @db.VarChar(255)
   description String?
+  academic_year_id String @db.VarChar(255)
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
   classes     Class[]
+  academic_year Academic_Year @relation(fields: [academic_year_id], references: [id], onDelete: Cascade)
 }
 
 model Schedule {

@@ -8,6 +8,7 @@ import {
     Delete,
     UseGuards,
     Req,
+    Query,
 } from '@nestjs/common';
 import {
     ApiResponse,
@@ -138,7 +139,10 @@ export class GradeLevelController {
         description: 'All grade levels have been successfully retrieved.',
         type: [CreateGradeLevelDto],
     })
-    async findAll() {
-        return this.gradeLevelService.getAllGradeLevels();
+    async findAll(
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10
+    ) {
+        return this.gradeLevelService.getAllGradeLevels(page, limit);
     }
 }

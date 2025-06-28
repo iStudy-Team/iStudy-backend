@@ -99,8 +99,10 @@ CREATE TABLE Grade_Level (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    academic_year_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    FOREIGN KEY (academic_year_id) REFERENCES Academic_Year (id) ON DELETE CASCADE
 );
 
 -- Bảng Schedule
