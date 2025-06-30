@@ -109,6 +109,7 @@ export class AcademicYearService {
             where: { id },
             include: {
                 classes: true,
+                grade_levels: true,
             },
         });
 
@@ -156,6 +157,7 @@ export class AcademicYearService {
         const academicYears = await this.prisma.academic_Year.findMany({
             include: {
                 classes: true,
+                grade_levels: true,
             },
             orderBy: {
                 created_at: 'desc',
@@ -181,6 +183,7 @@ export class AcademicYearService {
             where: { status: 1 },
             include: {
                 classes: true,
+                grade_levels: true,
             },
         });
 
@@ -248,6 +251,7 @@ export class AcademicYearService {
             take: limit,
             include: {
                 classes: true,
+                grade_levels: true,
             },
             orderBy: {
                 created_at: 'desc',
