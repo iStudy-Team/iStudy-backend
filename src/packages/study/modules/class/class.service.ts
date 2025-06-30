@@ -63,10 +63,12 @@ export class ClassService {
         }
 
         try {
+            // Remove teacher_id from the data before creating the class
+            const { teacher_id, ...classData } = createClassDto;
             const newClass = await this.prisma.class.create({
                 data: {
                     id: this.generateIdService.generateId(),
-                    ...createClassDto,
+                    ...classData,
                 },
             });
 
@@ -109,25 +111,25 @@ export class ClassService {
             throw new NotFoundException('Class not found');
         }
 
-        if (
-            existingClass.academic_year_id !==
-                updateClassDto.academic_year_id ||
-            existingClass.grade_level_id !== updateClassDto.grade_level_id ||
-            existingClass.name !== updateClassDto.name
-        ) {
-            const classWithSameDetails = await this.prisma.class.findFirst({
-                where: {
-                    name: updateClassDto.name,
-                    academic_year_id: updateClassDto.academic_year_id,
-                    grade_level_id: updateClassDto.grade_level_id,
-                },
-            });
-            if (classWithSameDetails) {
-                throw new ConflictException(
-                    'Class with the same name already exists for this academic year and grade level'
-                );
-            }
-        }
+        // if (
+        //     existingClass.academic_year_id !==
+        //         updateClassDto.academic_year_id ||
+        //     existingClass.grade_level_id !== updateClassDto.grade_level_id ||
+        //     existingClass.name !== updateClassDto.name
+        // ) {
+        //     const classWithSameDetails = await this.prisma.class.findFirst({
+        //         where: {
+        //             name: updateClassDto.name,
+        //             academic_year_id: updateClassDto.academic_year_id,
+        //             grade_level_id: updateClassDto.grade_level_id,
+        //         },
+        //     });
+        //     if (classWithSameDetails) {
+        //         throw new ConflictException(
+        //             'Class with the same name already exists for this academic year and grade level'
+        //         );
+        //     }
+        // }
 
         if (updateClassDto.start_date && updateClassDto.end_date) {
             if (
@@ -177,19 +179,8 @@ export class ClassService {
                     class_teachers: {
                         include: {
                             teacher: {
-                                select: {
-                                    id: true,
-                                    full_name: true,
-                                },
                                 include: {
-                                    user: {
-                                        select: {
-                                            id: true,
-                                            email: true,
-                                            phone: true,
-                                            avatar: true,
-                                        },
-                                    },
+                                    user: true,
                                 },
                             },
                         },
@@ -197,19 +188,8 @@ export class ClassService {
                     class_enrollments: {
                         include: {
                             student: {
-                                select: {
-                                    id: true,
-                                    full_name: true,
-                                },
                                 include: {
-                                    user: {
-                                        select: {
-                                            id: true,
-                                            email: true,
-                                            phone: true,
-                                            avatar: true,
-                                        },
-                                    },
+                                    user: true,
                                 },
                             },
                         },
@@ -241,19 +221,8 @@ export class ClassService {
                 class_teachers: {
                     include: {
                         teacher: {
-                            select: {
-                                id: true,
-                                full_name: true,
-                            },
                             include: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        email: true,
-                                        phone: true,
-                                        avatar: true,
-                                    },
-                                },
+                                user: true,
                             },
                         },
                     },
@@ -261,19 +230,8 @@ export class ClassService {
                 class_enrollments: {
                     include: {
                         student: {
-                            select: {
-                                id: true,
-                                full_name: true,
-                            },
                             include: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        email: true,
-                                        phone: true,
-                                        avatar: true,
-                                    },
-                                },
+                                user: true,
                             },
                         },
                     },
@@ -357,19 +315,8 @@ export class ClassService {
                 class_teachers: {
                     include: {
                         teacher: {
-                            select: {
-                                id: true,
-                                full_name: true,
-                            },
                             include: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        email: true,
-                                        phone: true,
-                                        avatar: true,
-                                    },
-                                },
+                                user: true,
                             },
                         },
                     },
@@ -377,19 +324,8 @@ export class ClassService {
                 class_enrollments: {
                     include: {
                         student: {
-                            select: {
-                                id: true,
-                                full_name: true,
-                            },
                             include: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        email: true,
-                                        phone: true,
-                                        avatar: true,
-                                    },
-                                },
+                                user: true,
                             },
                         },
                     },
