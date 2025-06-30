@@ -201,7 +201,12 @@ export class ScheduleService {
                                         },
                                     },
                                 }
-                            }
+                            },
+                            class_teachers: {
+                                include: {
+                                    teacher: true,
+                                },
+                            },
                         }
                     },
                 },
@@ -238,7 +243,29 @@ export class ScheduleService {
                 },
             },
             include: {
-                class: true,
+                class: {
+                    include: {
+                        class_teachers: {
+                            include: {
+                                teacher: true
+                            }
+                        },
+                        class_sessions: {
+                            select: {
+                                topic: true,
+                                start_time: true,
+                                end_time: true,
+                                date: true,
+                                teacher: {
+                                    select: {
+                                        id: true,
+                                        full_name: true,
+                                    },
+                                },
+                            },
+                        },
+                    }
+                }
             },
             orderBy: [
                 { day: 'asc' },

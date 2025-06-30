@@ -81,6 +81,21 @@ export class StudentService {
     async getStudentById(id: string) {
         const student = await this.prisma.student.findFirst({
             where: { id },
+            include: {
+                class_enrollments: {
+                    include: {
+                        class: {
+                            include: {
+                                class_teachers: {
+                                    include: {
+                                        teacher: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         if (!student) {
@@ -119,7 +134,24 @@ export class StudentService {
     }
 
     async getAllStudents() {
-        const students = await this.prisma.student.findMany();
+        const students = await this.prisma.student.findMany({
+            include: {
+                user: true,
+                class_enrollments: {
+                    include: {
+                        class: {
+                            include: {
+                                class_teachers: {
+                                    include: {
+                                        teacher: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
         if (students.length === 0) {
             throw new NotFoundException('No students found');
         }
