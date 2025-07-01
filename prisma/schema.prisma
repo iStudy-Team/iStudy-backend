@@ -28,6 +28,8 @@ model ActivityLog {
   created_at  DateTime  @default(now()) @db.Timestamp(6)
 
   user        User      @relation(fields: [user_id], references: [id])
+
+  @@map("Activity_Log")
 }
 
 
@@ -86,6 +88,8 @@ model TeacherSalary {
   updated_at     DateTime  @updatedAt @db.Timestamp(6)
 
   teacher        Teacher   @relation(fields: [teacher_id], references: [id])
+
+  @@map("Teacher_Salary")
 }
 
 
@@ -124,6 +128,8 @@ model ClassPromotion {
   gradeLevel          Grade_Level @relation("ClassPromotionGradeLevel", fields: [grade_level_id], references: [id])
   convertedClass      Class?     @relation("ClassPromotionConvertedClass", fields: [converted_class_id], references: [id])
   createdBy           User       @relation(fields: [created_by], references: [id])
+
+  @@map("Class_Promotion")
 }
 
 model Notification {
@@ -150,6 +156,8 @@ model NotificationRecipient {
 
   notification    Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
   recipient       User         @relation(fields: [recipient_id], references: [id])
+
+  @@map("Notification_Recipient")
 }
 
 
@@ -161,6 +169,8 @@ model StudentStatistic {
   new_students      Int       @default(0)
   inactive_students Int       @default(0)
   generated_at      DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Student_Statistic")
 }
 
 model FinancialStatistic {
@@ -175,6 +185,8 @@ model FinancialStatistic {
   total_discounts  Decimal   @default(0) @db.Decimal(15, 2)
   unpaid_invoices  Decimal   @default(0) @db.Decimal(15, 2)
   generated_at     DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Financial_Statistic")
 }
 
 

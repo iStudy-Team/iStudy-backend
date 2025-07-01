@@ -101,7 +101,7 @@ CREATE TABLE Grade_Level (
     description TEXT,
     academic_year_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (academic_year_id) REFERENCES Academic_Year (id) ON DELETE CASCADE
 );
 
@@ -227,7 +227,7 @@ CREATE TABLE Payment (
 );
 
 -- Bảng Teacher_Salaries
-CREATE TABLE Teacher_Salarie (
+CREATE TABLE Teacher_Salary (
     id VARCHAR(255) PRIMARY KEY,
     teacher_id VARCHAR(255) NOT NULL,
     month INT NOT NULL,

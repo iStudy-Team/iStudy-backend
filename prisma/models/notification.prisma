@@ -33,6 +33,8 @@ model ClassPromotion {
   gradeLevel          Grade_Level @relation("ClassPromotionGradeLevel", fields: [grade_level_id], references: [id])
   convertedClass      Class?     @relation("ClassPromotionConvertedClass", fields: [converted_class_id], references: [id])
   createdBy           User       @relation(fields: [created_by], references: [id])
+
+  @@map("Class_Promotion")
 }
 
 model Notification {
@@ -59,4 +61,6 @@ model NotificationRecipient {
 
   notification    Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
   recipient       User         @relation(fields: [recipient_id], references: [id])
+
+  @@map("Notification_Recipient")
 }

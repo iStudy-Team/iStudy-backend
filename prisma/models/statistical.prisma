@@ -6,6 +6,8 @@ model StudentStatistic {
   new_students      Int       @default(0)
   inactive_students Int       @default(0)
   generated_at      DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Student_Statistic")
 }
 
 model FinancialStatistic {
@@ -20,4 +22,6 @@ model FinancialStatistic {
   total_discounts  Decimal   @default(0) @db.Decimal(15, 2)
   unpaid_invoices  Decimal   @default(0) @db.Decimal(15, 2)
   generated_at     DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Financial_Statistic")
 }

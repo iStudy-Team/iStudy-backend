@@ -9,4 +9,6 @@ model ActivityLog {
   created_at  DateTime  @default(now()) @db.Timestamp(6)
 
   user        User      @relation(fields: [user_id], references: [id])
+
+  @@map("Activity_Log")
 }
