@@ -98,6 +98,7 @@ export class ScheduleService {
                 },
             });
         } catch (error) {
+            console.error('Error creating schedule:', error);
             throw new InternalServerErrorException('Failed to create schedule');
         }
     }
@@ -173,10 +174,10 @@ export class ScheduleService {
                 where: {
                     class_id: getScheduleDto.class_id,
                 },
-                orderBy: {
-                    day: 'asc',
-                    start_time: 'asc',
-                },
+                orderBy: [
+                    { day: 'asc' },
+                    { start_time: 'asc' },
+                ],
             });
             return schedules;
         } else if (getScheduleDto.day && !getScheduleDto.class_id) {
@@ -200,7 +201,12 @@ export class ScheduleService {
                                         },
                                     },
                                 }
-                            }
+                            },
+                            class_teachers: {
+                                include: {
+                                    teacher: true,
+                                },
+                            },
                         }
                     },
                 },
@@ -237,12 +243,34 @@ export class ScheduleService {
                 },
             },
             include: {
-                class: true,
+                class: {
+                    include: {
+                        class_teachers: {
+                            include: {
+                                teacher: true
+                            }
+                        },
+                        class_sessions: {
+                            select: {
+                                topic: true,
+                                start_time: true,
+                                end_time: true,
+                                date: true,
+                                teacher: {
+                                    select: {
+                                        id: true,
+                                        full_name: true,
+                                    },
+                                },
+                            },
+                        },
+                    }
+                }
             },
-            orderBy: {
-                day: 'asc',
-                start_time: 'asc',
-            },
+            orderBy: [
+                { day: 'asc' },
+                { start_time: 'asc' },
+            ],
         });
         if (schedules.length === 0) {
             throw new NotFoundException(

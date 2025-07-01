@@ -133,6 +133,7 @@ export class AuthService {
                     avatar: user.avatar,
                     createdAt: user.created_at,
                     updatedAt: user.updated_at,
+                    role: user.role,
                 },
                 token,
             };

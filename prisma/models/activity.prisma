@@ -1,0 +1,14 @@
+model ActivityLog {
+  id          String    @id @db.VarChar(255)
+  user_id     String    @db.VarChar(255)
+  action      String    @db.VarChar(255)
+  entity_type String?   @db.VarChar(100)
+  details     String?   @db.Text
+  ip_address  String?   @db.VarChar(45)
+  user_agent  String?   @db.Text
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+
+  user        User      @relation(fields: [user_id], references: [id])
+
+  @@map("Activity_Log")
+}

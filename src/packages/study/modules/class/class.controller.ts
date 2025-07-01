@@ -122,7 +122,7 @@ export class ClassController {
         return this.classService.getAllClasses();
     }
 
-    @Get('get-pagination')
+    @Post('get-pagination')
     @ApiOperation({ summary: 'Get classes with pagination' })
     @ApiResponse({
         status: 200,

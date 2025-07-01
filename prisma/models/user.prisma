@@ -16,6 +16,11 @@ model User {
   parents    Parent[]
   password_reset_tokens Password_Reset_Token[]
   payment Payment[]
+  announcement Announcement[]
+  class_promotion ClassPromotion[]
+  notification Notification[]
+  notification_recipient NotificationRecipient[]
+  activity_logs ActivityLog[]
 }
 
 model Teacher {
@@ -34,6 +39,7 @@ model Teacher {
   class_teachers Class_Teacher[]
   class_sessions Class_Session[]
   attendance Attendance[]
+  teacher_salary TeacherSalary[]
 }
 
 model Student {

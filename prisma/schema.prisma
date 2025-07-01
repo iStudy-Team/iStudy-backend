@@ -17,6 +17,22 @@ datasource db {
 }
 
 
+model ActivityLog {
+  id          String    @id @db.VarChar(255)
+  user_id     String    @db.VarChar(255)
+  action      String    @db.VarChar(255)
+  entity_type String?   @db.VarChar(100)
+  details     String?   @db.Text
+  ip_address  String?   @db.VarChar(45)
+  user_agent  String?   @db.Text
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+
+  user        User      @relation(fields: [user_id], references: [id])
+
+  @@map("Activity_Log")
+}
+
+
 model Invoice {
   id             String    @id @db.VarChar(255)
   student_id     String    @db.VarChar(255)
@@ -54,6 +70,125 @@ model Payment {
   receivedBy       User      @relation(fields: [received_by], references: [id])
 }
 
+model TeacherSalary {
+  id             String    @id @db.VarChar(255)
+  teacher_id     String    @db.VarChar(255)
+  month          Int
+  year           Int
+  base_salary    Decimal   @default(0) @db.Decimal(10, 2)
+  session_rate   Decimal   @default(0) @db.Decimal(10, 2)
+  total_sessions Int       @default(0)
+  bonus          Decimal   @default(0) @db.Decimal(10, 2)
+  deductions     Decimal   @default(0) @db.Decimal(10, 2)
+  total_amount   Decimal   @db.Decimal(10, 2)
+  payment_status Int       @default(0) // 0: Pending, 1: Paid, 2: Canceled
+  payment_date   DateTime? @db.Date
+  notes          String?   @db.Text
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  teacher        Teacher   @relation(fields: [teacher_id], references: [id])
+
+  @@map("Teacher_Salary")
+}
+
+
+model Announcement {
+  id              String    @id @db.VarChar(255)
+  title           String    @db.VarChar(255)
+  content         String    @db.Text
+  type            Int       @default(0) // 0: Popup, 1: Slider, 2: News, 3: Emergency
+  start_date      DateTime? @db.Date
+  end_date        DateTime? @db.Date
+  target_audience Int       @default(0) // 0: All, 1: Parents, 2: Teachers, 3: Students
+  status          Int       @default(0) // 0: Active, 1: Inactive
+  created_by      String    @db.VarChar(255)
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime  @updatedAt @db.Timestamp(6)
+
+  createdBy       User      @relation(fields: [created_by], references: [id])
+}
+
+model ClassPromotion {
+  id                  String    @id @db.VarChar(255)
+  title               String    @db.VarChar(255)
+  description         String?   @db.Text
+  grade_level_id      String    @db.VarChar(255)
+  planned_start_date  DateTime? @db.Date
+  tuition_fee         Decimal   @db.Decimal(10, 2)
+  max_students        Int       @default(30)
+  promotion_start     DateTime? @db.Date
+  promotion_end       DateTime? @db.Date
+  discount_offered    Decimal   @default(0) @db.Decimal(5, 2)
+  status              Int       @default(0) // 0: Planned, 1: Active, 2: Completed, 3: Canceled
+  converted_class_id  String?   @db.VarChar(255)
+  created_by          String    @db.VarChar(255)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+
+  gradeLevel          Grade_Level @relation("ClassPromotionGradeLevel", fields: [grade_level_id], references: [id])
+  convertedClass      Class?     @relation("ClassPromotionConvertedClass", fields: [converted_class_id], references: [id])
+  createdBy           User       @relation(fields: [created_by], references: [id])
+
+  @@map("Class_Promotion")
+}
+
+model Notification {
+  id         String    @id @db.VarChar(255)
+  type       Int       // 0: Absence, 1: Payment Due, 2: Emergency, 3: Announcement, 4: Class Cancel
+  title      String    @db.VarChar(255)
+  content    String    @db.Text
+  sender_id  String    @db.VarChar(255)
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+
+  sender     User                     @relation(fields: [sender_id], references: [id])
+  recipients NotificationRecipient[]
+}
+
+model NotificationRecipient {
+  id              String    @id @db.VarChar(255)
+  notification_id String    @db.VarChar(255)
+  recipient_id    String    @db.VarChar(255)
+  recipient_type  Int       // 0: Parent, 1: Teacher, 2: Student
+  delivery_method Int       // 0: App, 1: SMS, 2: Email, 3: Zalo, 4: Facebook
+  status          Int       @default(0) // 0: Pending, 1: Sent, 2: Failed, 3: Read
+  sent_at         DateTime? @db.Timestamp(6)
+  error_message   String?   @db.Text
+
+  notification    Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+  recipient       User         @relation(fields: [recipient_id], references: [id])
+
+  @@map("Notification_Recipient")
+}
+
+
+model StudentStatistic {
+  id                String    @id @db.VarChar(255)
+  year              Int
+  month             Int
+  total_students    Int       @default(0)
+  new_students      Int       @default(0)
+  inactive_students Int       @default(0)
+  generated_at      DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Student_Statistic")
+}
+
+model FinancialStatistic {
+  id               String    @id @db.VarChar(255)
+  year             Int
+  month            Int
+  total_income     Decimal   @default(0) @db.Decimal(15, 2)
+  total_expenses   Decimal   @default(0) @db.Decimal(15, 2)
+  teacher_salaries Decimal   @default(0) @db.Decimal(15, 2)
+  other_expenses   Decimal   @default(0) @db.Decimal(15, 2)
+  profit           Decimal   @default(0) @db.Decimal(15, 2)
+  total_discounts  Decimal   @default(0) @db.Decimal(15, 2)
+  unpaid_invoices  Decimal   @default(0) @db.Decimal(15, 2)
+  generated_at     DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Financial_Statistic")
+}
+
 
 // Prisma models for academic, class, and attendance management
 
@@ -66,15 +201,19 @@ model Academic_Year {
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
   classes      Class[]
+  grade_levels Grade_Level[]
 }
 
 model Grade_Level {
   id          String   @id @db.VarChar(255)
   name        String   @unique @db.VarChar(255)
   description String?
+  academic_year_id String @db.VarChar(255)
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
   classes     Class[]
+  class_promotions ClassPromotion[] @relation("ClassPromotionGradeLevel")
+  academic_year Academic_Year @relation(fields: [academic_year_id], references: [id], onDelete: Cascade)
 }
 
 model Schedule {
@@ -108,6 +247,7 @@ model Class {
   class_sessions    Class_Session[]
   schedule         Schedule[]
   invoid         Invoice[]
+  converted_from_promotions ClassPromotion[] @relation("ClassPromotionConvertedClass")
 }
 
 model Class_Teacher {
@@ -184,6 +324,11 @@ model User {
   parents    Parent[]
   password_reset_tokens Password_Reset_Token[]
   payment Payment[]
+  announcement Announcement[]
+  class_promotion ClassPromotion[]
+  notification Notification[]
+  notification_recipient NotificationRecipient[]
+  activity_logs ActivityLog[]
 }
 
 model Teacher {
@@ -202,6 +347,7 @@ model Teacher {
   class_teachers Class_Teacher[]
   class_sessions Class_Session[]
   attendance Attendance[]
+  teacher_salary TeacherSalary[]
 }
 
 model Student {

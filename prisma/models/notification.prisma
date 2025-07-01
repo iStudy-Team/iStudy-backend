@@ -1,0 +1,66 @@
+model Announcement {
+  id              String    @id @db.VarChar(255)
+  title           String    @db.VarChar(255)
+  content         String    @db.Text
+  type            Int       @default(0) // 0: Popup, 1: Slider, 2: News, 3: Emergency
+  start_date      DateTime? @db.Date
+  end_date        DateTime? @db.Date
+  target_audience Int       @default(0) // 0: All, 1: Parents, 2: Teachers, 3: Students
+  status          Int       @default(0) // 0: Active, 1: Inactive
+  created_by      String    @db.VarChar(255)
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime  @updatedAt @db.Timestamp(6)
+
+  createdBy       User      @relation(fields: [created_by], references: [id])
+}
+
+model ClassPromotion {
+  id                  String    @id @db.VarChar(255)
+  title               String    @db.VarChar(255)
+  description         String?   @db.Text
+  grade_level_id      String    @db.VarChar(255)
+  planned_start_date  DateTime? @db.Date
+  tuition_fee         Decimal   @db.Decimal(10, 2)
+  max_students        Int       @default(30)
+  promotion_start     DateTime? @db.Date
+  promotion_end       DateTime? @db.Date
+  discount_offered    Decimal   @default(0) @db.Decimal(5, 2)
+  status              Int       @default(0) // 0: Planned, 1: Active, 2: Completed, 3: Canceled
+  converted_class_id  String?   @db.VarChar(255)
+  created_by          String    @db.VarChar(255)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+
+  gradeLevel          Grade_Level @relation("ClassPromotionGradeLevel", fields: [grade_level_id], references: [id])
+  convertedClass      Class?     @relation("ClassPromotionConvertedClass", fields: [converted_class_id], references: [id])
+  createdBy           User       @relation(fields: [created_by], references: [id])
+
+  @@map("Class_Promotion")
+}
+
+model Notification {
+  id         String    @id @db.VarChar(255)
+  type       Int       // 0: Absence, 1: Payment Due, 2: Emergency, 3: Announcement, 4: Class Cancel
+  title      String    @db.VarChar(255)
+  content    String    @db.Text
+  sender_id  String    @db.VarChar(255)
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+
+  sender     User                     @relation(fields: [sender_id], references: [id])
+  recipients NotificationRecipient[]
+}
+
+model NotificationRecipient {
+  id              String    @id @db.VarChar(255)
+  notification_id String    @db.VarChar(255)
+  recipient_id    String    @db.VarChar(255)
+  recipient_type  Int       // 0: Parent, 1: Teacher, 2: Student
+  delivery_method Int       // 0: App, 1: SMS, 2: Email, 3: Zalo, 4: Facebook
+  status          Int       @default(0) // 0: Pending, 1: Sent, 2: Failed, 3: Read
+  sent_at         DateTime? @db.Timestamp(6)
+  error_message   String?   @db.Text
+
+  notification    Notification @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+  recipient       User         @relation(fields: [recipient_id], references: [id])
+
+  @@map("Notification_Recipient")
+}

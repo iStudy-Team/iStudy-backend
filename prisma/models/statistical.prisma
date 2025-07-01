@@ -1,0 +1,27 @@
+model StudentStatistic {
+  id                String    @id @db.VarChar(255)
+  year              Int
+  month             Int
+  total_students    Int       @default(0)
+  new_students      Int       @default(0)
+  inactive_students Int       @default(0)
+  generated_at      DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Student_Statistic")
+}
+
+model FinancialStatistic {
+  id               String    @id @db.VarChar(255)
+  year             Int
+  month            Int
+  total_income     Decimal   @default(0) @db.Decimal(15, 2)
+  total_expenses   Decimal   @default(0) @db.Decimal(15, 2)
+  teacher_salaries Decimal   @default(0) @db.Decimal(15, 2)
+  other_expenses   Decimal   @default(0) @db.Decimal(15, 2)
+  profit           Decimal   @default(0) @db.Decimal(15, 2)
+  total_discounts  Decimal   @default(0) @db.Decimal(15, 2)
+  unpaid_invoices  Decimal   @default(0) @db.Decimal(15, 2)
+  generated_at     DateTime  @default(now()) @db.Timestamp(6)
+
+  @@map("Financial_Statistic")
+}

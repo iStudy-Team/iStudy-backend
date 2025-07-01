@@ -109,6 +109,7 @@ export class AcademicYearService {
             where: { id },
             include: {
                 classes: true,
+                grade_levels: true,
             },
         });
 
@@ -147,21 +148,34 @@ export class AcademicYearService {
         }
     }
 
-    async getAllAcademicYears() {
+    async getAllAcademicYears(page?: number, limit?: number) {
+        const shouldPaginate = page !== undefined && limit !== undefined;
+
+        const skip = shouldPaginate ? Number((page - 1) * limit) : undefined;
+        const take = shouldPaginate ? Number(limit) : undefined;
+
         const academicYears = await this.prisma.academic_Year.findMany({
             include: {
-                classes: true, // Include related classes
+                classes: true,
+                grade_levels: true,
             },
             orderBy: {
-                created_at: 'desc', // Order by creation date
+                created_at: 'desc',
             },
+            skip,
+            take,
         });
 
         if (academicYears.length === 0) {
             throw new NotFoundException('No academic years found');
         }
 
-        return academicYears;
+        return {
+            data: academicYears,
+            totalCount: await this.prisma.academic_Year.count(),
+            page: shouldPaginate ? page : 1,
+            limit: shouldPaginate ? limit : academicYears.length,
+        };
     }
 
     async getActiveAcademicYear() {
@@ -169,6 +183,7 @@ export class AcademicYearService {
             where: { status: 1 },
             include: {
                 classes: true,
+                grade_levels: true,
             },
         });
 
@@ -236,6 +251,7 @@ export class AcademicYearService {
             take: limit,
             include: {
                 classes: true,
+                grade_levels: true,
             },
             orderBy: {
                 created_at: 'desc',

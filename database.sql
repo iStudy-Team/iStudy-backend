@@ -99,8 +99,10 @@ CREATE TABLE Grade_Level (
     id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    academic_year_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (academic_year_id) REFERENCES Academic_Year (id) ON DELETE CASCADE
 );
 
 -- Bảng Schedule
@@ -225,9 +227,9 @@ CREATE TABLE Payment (
 );
 
 -- Bảng Teacher_Salaries
-CREATE TABLE Teacher_Salaries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    teacher_id INT NOT NULL,
+CREATE TABLE Teacher_Salary (
+    id VARCHAR(255) PRIMARY KEY,
+    teacher_id VARCHAR(255) NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,
     base_salary DECIMAL(10, 2) DEFAULT 0,
@@ -236,161 +238,92 @@ CREATE TABLE Teacher_Salaries (
     bonus DECIMAL(10, 2) DEFAULT 0,
     deductions DECIMAL(10, 2) DEFAULT 0,
     total_amount DECIMAL(10, 2) NOT NULL,
-    payment_status ENUM('pending', 'paid', 'canceled') DEFAULT 'pending',
+    payment_status TINYINT DEFAULT 0, -- 0: Pending, 1: Paid, 2: Canceled
     payment_date DATE,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (teacher_id) REFERENCES Teachers (id)
+    FOREIGN KEY (teacher_id) REFERENCES Teacher (id)
 );
 
 -- Bảng Announcements
-CREATE TABLE Announcements (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE Announcement (
+    id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    type ENUM(
-        'popup',
-        'slider',
-        'news',
-        'emergency'
-    ) DEFAULT 'news',
+    type TINYINT DEFAULT 0, -- 0: Popup, 1: Slider, 2: News, 3: Emergency
     start_date DATE,
     end_date DATE,
-    target_audience ENUM(
-        'all',
-        'parents',
-        'teachers',
-        'students'
-    ) DEFAULT 'all',
-    status ENUM('active', 'inactive') DEFAULT 'active',
-    created_by INT NOT NULL,
+    target_audience TINYINT DEFAULT 0, -- 0: All, 1: Parents, 2: Teachers, 3: Students
+    status TINYINT DEFAULT 0, -- 1: Inactive, 0: Active
+    created_by VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (created_by) REFERENCES Users (id)
+    FOREIGN KEY (created_by) REFERENCES User (id)
 );
 
 -- Bảng Class_Promotions
-CREATE TABLE Class_Promotions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE Class_Promotion (
+    id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    grade_level_id INT NOT NULL,
+    grade_level_id VARCHAR(255) NOT NULL,
     planned_start_date DATE,
     tuition_fee DECIMAL(10, 2) NOT NULL,
     max_students INT DEFAULT 30,
     promotion_start DATE,
     promotion_end DATE,
     discount_offered DECIMAL(5, 2) DEFAULT 0,
-    status ENUM(
-        'active',
-        'inactive',
-        'converted'
-    ) DEFAULT 'active',
-    converted_class_id INT,
-    created_by INT NOT NULL,
+    status TINYINT DEFAULT 0, -- 0: Planned, 1: Active, 2: Completed, 3: Canceled
+    converted_class_id VARCHAR(255),
+    created_by VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (grade_level_id) REFERENCES Grade_Levels (id),
-    FOREIGN KEY (converted_class_id) REFERENCES Classes (id),
-    FOREIGN KEY (created_by) REFERENCES Users (id)
-);
-
--- Bảng Class_Interests
-CREATE TABLE Class_Interests (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    class_promotion_id INT NOT NULL,
-    parent_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    email VARCHAR(255),
-    student_name VARCHAR(255) NOT NULL,
-    student_age INT,
-    notes TEXT,
-    status ENUM(
-        'new',
-        'contacted',
-        'enrolled',
-        'not_interested'
-    ) DEFAULT 'new',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (class_promotion_id) REFERENCES Class_Promotions (id) ON DELETE CASCADE
+    FOREIGN KEY (grade_level_id) REFERENCES Grade_Level (id),
+    FOREIGN KEY (converted_class_id) REFERENCES Class (id),
+    FOREIGN KEY (created_by) REFERENCES User (id)
 );
 
 -- Bảng Notifications
-CREATE TABLE Notifications (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    type ENUM(
-        'absence',
-        'payment_due',
-        'emergency',
-        'announcement',
-        'class_cancel'
-    ) NOT NULL,
+CREATE TABLE Notification (
+    id VARCHAR(255) PRIMARY KEY,
+    type TINYINT NOT NULL, -- 0: Absence, 1: Payment Due, 2: Emergency, 3: Announcement, 4: Class Cancel
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    sender_id INT NOT NULL,
+    sender_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (sender_id) REFERENCES Users (id)
+    FOREIGN KEY (sender_id) REFERENCES User (id)
 );
 
 -- Bảng Notification_Recipients
-CREATE TABLE Notification_Recipients (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    notification_id INT NOT NULL,
-    recipient_id INT NOT NULL,
-    recipient_type ENUM(
-        'parent',
-        'teacher',
-        'student',
-        'admin'
-    ) NOT NULL,
-    delivery_method ENUM(
-        'app',
-        'sms',
-        'email',
-        'zalo',
-        'facebook'
-    ) NOT NULL,
-    status ENUM(
-        'pending',
-        'sent',
-        'failed',
-        'read'
-    ) DEFAULT 'pending',
+CREATE TABLE Notification_Recipient (
+     id VARCHAR(255) PRIMARY KEY,
+    notification_id VARCHAR(255) NOT NULL,
+    recipient_id VARCHAR(255) NOT NULL,
+    recipient_type TINYINT NOT NULL, -- 0: Parent, 1: Teacher, 2: Student
+    delivery_method TINYINT NOT NULL, -- 0: App, 1: SMS, 2: Email, 3: Zalo, 4: Facebook
+    status TINYINT DEFAULT 0, -- 0: Pending, 1: Sent, 2: Failed, 3: Read
     sent_at TIMESTAMP NULL,
     error_message TEXT,
-    FOREIGN KEY (notification_id) REFERENCES Notifications (id) ON DELETE CASCADE,
-    FOREIGN KEY (recipient_id) REFERENCES Users (id)
-);
-
--- Bảng System_Settings
-CREATE TABLE System_Settings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    setting_key VARCHAR(255) UNIQUE NOT NULL,
-    setting_value TEXT,
-    setting_description TEXT,
-    updated_by INT NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (updated_by) REFERENCES Users (id)
+    FOREIGN KEY (notification_id) REFERENCES Notification (id) ON DELETE CASCADE,
+    FOREIGN KEY (recipient_id) REFERENCES User (id)
 );
 
 -- Bảng Activity_Logs
-CREATE TABLE Activity_Logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+CREATE TABLE Activity_Log (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
     action VARCHAR(255) NOT NULL,
     entity_type VARCHAR(100),
-    entity_id INT,
     details TEXT,
     ip_address VARCHAR(45),
     user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users (id)
+    FOREIGN KEY (user_id) REFERENCES User (id)
 );
 
 -- Bảng Student_Statistics
-CREATE TABLE Student_Statistics (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE Student_Statistic (
+    id VARCHAR(255) PRIMARY KEY,
     year INT NOT NULL,
     month INT NOT NULL,
     total_students INT DEFAULT 0,
@@ -400,8 +333,8 @@ CREATE TABLE Student_Statistics (
 );
 
 -- Bảng Financial_Statistics
-CREATE TABLE Financial_Statistics (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE Financial_Statistic (
+    id VARCHAR(255) PRIMARY KEY,
     year INT NOT NULL,
     month INT NOT NULL,
     total_income DECIMAL(15, 2) DEFAULT 0,
@@ -413,58 +346,3 @@ CREATE TABLE Financial_Statistics (
     unpaid_invoices DECIMAL(15, 2) DEFAULT 0,
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
--- Tạo các index để tối ưu hiệu suất
-CREATE INDEX idx_users_username ON Users (username);
-
-CREATE INDEX idx_users_email ON Users (email);
-
-CREATE INDEX idx_users_role ON Users (role);
-
-CREATE INDEX idx_teachers_user_id ON Teachers (user_id);
-
-CREATE INDEX idx_students_user_id ON Students (user_id);
-
-CREATE INDEX idx_parents_user_id ON Parents (user_id);
-
-CREATE INDEX idx_class_enrollments_student_id ON Class_Enrollments (student_id);
-
-CREATE INDEX idx_class_enrollments_class_id ON Class_Enrollments (class_id);
-
-CREATE INDEX idx_invoices_student_id ON Invoices (student_id);
-
-CREATE INDEX idx_invoices_status ON Invoices (status);
-
-CREATE INDEX idx_payments_invoice_id ON Payments (invoice_id);
-
-CREATE INDEX idx_attendance_student_id ON Attendance (student_id);
-
-CREATE INDEX idx_attendance_session_id ON Attendance (class_session_id);
-
-CREATE INDEX idx_class_sessions_class_id ON Class_Sessions (class_id);
-
-CREATE INDEX idx_class_sessions_date ON Class_Sessions (date);
-
--- Tạo trigger để tự động cập nhật final_amount trong bảng Invoices
-DELIMITER /
-/
-
-CREATE TRIGGER before_invoice_insert
-BEFORE INSERT ON Invoices
-FOR EACH ROW
-BEGIN
-    SET NEW.final_amount = NEW.amount - NEW.discount_amount;
-END
-/
-/
-
-CREATE TRIGGER before_invoice_update
-BEFORE UPDATE ON Invoices
-FOR EACH ROW
-BEGIN
-    SET NEW.final_amount = NEW.amount - NEW.discount_amount;
-END
-/
-/
-
-DELIMITER;
