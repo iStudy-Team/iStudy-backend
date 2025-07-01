@@ -20,6 +20,7 @@ model Grade_Level {
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @default(now()) @updatedAt @db.Timestamp(0)
   classes     Class[]
+  class_promotions ClassPromotion[] @relation("ClassPromotionGradeLevel")
   academic_year Academic_Year @relation(fields: [academic_year_id], references: [id], onDelete: Cascade)
 }
 
@@ -54,6 +55,7 @@ model Class {
   class_sessions    Class_Session[]
   schedule         Schedule[]
   invoid         Invoice[]
+  converted_from_promotions ClassPromotion[] @relation("ClassPromotionConvertedClass")
 }
 
 model Class_Teacher {
