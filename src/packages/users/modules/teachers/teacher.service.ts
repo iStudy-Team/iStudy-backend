@@ -86,6 +86,19 @@ export class TeacherService {
         try {
             const teacher = await this.prisma.teacher.findUnique({
                 where: { id },
+                include: {
+                     user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        avatar: true,
+                        username: true,
+                        role: true,
+                        status: true,
+                    },
+                },
+                }
             });
 
             if (!teacher) {
@@ -105,7 +118,21 @@ export class TeacherService {
 
     async getAllTeachers() {
         try {
-            return await this.prisma.teacher.findMany();
+            return await this.prisma.teacher.findMany({
+                include: {
+                     user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        avatar: true,
+                        username: true,
+                        role: true,
+                        status: true,
+                    },
+                },
+                },
+            });
         } catch (err) {
             console.error('Error fetching all teachers:', err);
             throw new InternalServerErrorException(

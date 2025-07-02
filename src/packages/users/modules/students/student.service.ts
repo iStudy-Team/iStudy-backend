@@ -95,6 +95,17 @@ export class StudentService {
                         },
                     },
                 },
+                 user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        avatar: true,
+                        username: true,
+                        role: true,
+                        status: true,
+                    },
+                },
             },
         });
 
@@ -136,7 +147,17 @@ export class StudentService {
     async getAllStudents() {
         const students = await this.prisma.student.findMany({
             include: {
-                user: true,
+                 user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        avatar: true,
+                        username: true,
+                        role: true,
+                        status: true,
+                    },
+                },
                 class_enrollments: {
                     include: {
                         class: {

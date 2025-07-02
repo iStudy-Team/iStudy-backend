@@ -8,6 +8,7 @@ import {
     UseGuards,
     Req,
     Query,
+    Delete,
 } from '@nestjs/common';
 import {
     ApiResponse,
@@ -105,5 +106,18 @@ export class ClassEnrollmentController {
             page,
             limit
         );
+    }
+
+    @Delete(':id')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT')
+    @ApiOperation({ summary: 'Delete a class enrollment' })
+    @ApiParam({ name: 'id', type: String, description: 'Class enrollment ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Class enrollment deleted successfully',
+    })
+    async remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+        return this.classEnrollmentService.delete(id, req.user);
     }
 }

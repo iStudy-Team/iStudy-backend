@@ -80,7 +80,7 @@ export class ScheduleController {
         );
     }
 
-    @Get(':id')
+    @Get('/get-by-id/:id')
     @ApiOperation({ summary: 'Get a schedule by ID' })
     @ApiParam({
         name: 'id',
@@ -112,5 +112,18 @@ export class ScheduleController {
         return this.scheduleService.getSchedulesByMultipleClasses(
             getScheduleByMultipleClassDto
         );
+    }
+
+    @Get('get-by-student')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT')
+    @ApiOperation({ summary: 'Get schedules by student' })
+    @ApiResponse({
+        status: 200,
+        description: 'The schedules have been successfully retrieved.',
+        type: [GetScheduleDto],
+    })
+    async getByUser(@Req() req: AuthenticatedRequest) {
+        return this.scheduleService.getScheduleByStudentId(req.user.id);
     }
 }

@@ -286,6 +286,15 @@ export class ClassService {
                             teacher: true,
                         },
                     },
+                    class_enrollments: {
+                        include: {
+                            student: {
+                                include: {
+                                    user: true,
+                                },
+                            },
+                        },
+                    }
                 },
                 orderBy: {
                     created_at: 'desc',

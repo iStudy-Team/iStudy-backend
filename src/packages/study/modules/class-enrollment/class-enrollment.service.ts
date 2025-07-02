@@ -31,8 +31,8 @@ export class ClassEnrollmentService {
             throw new NotFoundException(`Class not found`);
         }
         // Check if the student exists
-        const studentExists = await this.prisma.student.findUnique({
-            where: { id: user.id },
+        const studentExists = await this.prisma.student.findFirst({
+            where: { user_id: user.id },
         });
         if (!studentExists) {
             throw new NotFoundException(`Student not found`);
@@ -42,7 +42,7 @@ export class ClassEnrollmentService {
             {
                 where: {
                     class_id,
-                    student_id: user.id,
+                    student_id: studentExists.id,
                 },
             }
         );
@@ -58,12 +58,13 @@ export class ClassEnrollmentService {
                     data: {
                         ...createClassEnrollmentDto,
                         id: this.generateIdService.generateId(),
-                        student_id: user.id,
+                        student_id: studentExists.id,
                         enrollment_date: new Date().toISOString(),
                     },
                 });
             return newClassEnrollment;
         } catch (error) {
+            console.log(error);
             throw new InternalServerErrorException(
                 'Failed to create class enrollment'
             );
@@ -82,8 +83,17 @@ export class ClassEnrollmentService {
         if (!classEnrollment) {
             throw new NotFoundException(`Class enrollment not found`);
         }
+
+        // Get the student record for the current user
+        const studentExists = await this.prisma.student.findFirst({
+            where: { user_id: user.id },
+        });
+        if (!studentExists) {
+            throw new NotFoundException(`Student not found`);
+        }
+
         // Check if the user has permission to update the class enrollment
-        if (classEnrollment.student_id !== user.id) {
+        if (classEnrollment.student_id !== studentExists.id) {
             throw new ForbiddenException(
                 `You do not have permission to update this class enrollment`
             );
@@ -113,9 +123,16 @@ export class ClassEnrollmentService {
         if (!userExists) {
             throw new NotFoundException(`User not found`);
         }
+
+        const student = await this.prisma.student.findFirst({
+            where: { user_id: userId },
+        });
+        if (!student) {
+            throw new NotFoundException(`Student not found`);
+        }
         // Fetch class enrollments
         const classEnrollments = await this.prisma.class_Enrollment.findMany({
-            where: { student_id: userId },
+            where: { student_id: student.id },
             include: {
                 class: {
                     include: {
@@ -135,8 +152,6 @@ export class ClassEnrollmentService {
                                     select: {
                                         id: true,
                                         full_name: true,
-                                    },
-                                    include: {
                                         user: {
                                             select: {
                                                 id: true,
@@ -152,16 +167,19 @@ export class ClassEnrollmentService {
                     },
                 },
             },
-            skip: (page || 1 - 1) * (limit || 10),
-            take: limit,
+            skip: ((page || 1) - 1) * (limit || 10),
+            take: parseInt((limit ?? 10).toString()) || 10,
         });
         if (!classEnrollments || classEnrollments.length === 0) {
             throw new NotFoundException(`No class enrollments found for user`);
         }
-        return classEnrollments.map((enrollment) => ({
-            ...enrollment,
-            status: ClassEnrollmentStatusEnum[enrollment.status],
-        }));
+        return {
+            data: classEnrollments,
+            total: classEnrollments.length,
+            page: page || 1,
+            limit: limit || 10,
+            totalPages: Math.ceil(classEnrollments.length / (limit || 10)),
+        }
     }
 
     async findById(id: string) {
@@ -187,8 +205,6 @@ export class ClassEnrollmentService {
                                     select: {
                                         id: true,
                                         full_name: true,
-                                    },
-                                    include: {
                                         user: {
                                             select: {
                                                 id: true,
@@ -209,5 +225,42 @@ export class ClassEnrollmentService {
             throw new NotFoundException(`Class enrollment not found`);
         }
         return classEnrollment;
+    }
+
+    //delete class enrollment
+    async delete(id: string, user: User) {
+        // Check if the class enrollment exists
+        const classEnrollment = await this.prisma.class_Enrollment.findUnique({
+            where: { id },
+        });
+        if (!classEnrollment) {
+            throw new NotFoundException(`Class enrollment not found`);
+        }
+
+        // Get the student record for the current user
+        const studentExists = await this.prisma.student.findFirst({
+            where: { user_id: user.id },
+        });
+        if (!studentExists) {
+            throw new NotFoundException(`Student not found`);
+        }
+
+        // Check if the user has permission to delete the class enrollment
+        if (classEnrollment.student_id !== studentExists.id) {
+            throw new ForbiddenException(
+                `You do not have permission to delete this class enrollment`
+            );
+        }
+        // Delete the class enrollment
+        try {
+            await this.prisma.class_Enrollment.delete({
+                where: { id },
+            });
+            return { message: 'Class enrollment deleted successfully' };
+        } catch (error) {
+            throw new InternalServerErrorException(
+                'Failed to delete class enrollment'
+            );
+        }
     }
 }

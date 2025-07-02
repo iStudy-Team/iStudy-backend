@@ -57,7 +57,9 @@ export class ParentService {
         }
 
         if (parent.user_id !== user.id && user.role !== 4) {
-            throw new ForbiddenException('You do not have permission to update this parent');
+            throw new ForbiddenException(
+                'You do not have permission to update this parent'
+            );
         }
 
         try {
@@ -115,7 +117,21 @@ export class ParentService {
     }
 
     async getAllParents() {
-        const parents = await this.prisma.parent.findMany();
+        const parents = await this.prisma.parent.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        avatar: true,
+                        username: true,
+                        role: true,
+                        status: true,
+                    },
+                },
+            },
+        });
         if (parents.length === 0) {
             throw new NotFoundException('No parents found');
         }

@@ -279,4 +279,50 @@ export class ScheduleService {
         }
         return schedules;
     }
+
+    async getScheduleByStudentId(userId: string) {
+        // Check if the student exists
+        const student = await this.prisma.student.findFirst({
+            where: { user_id: userId },
+            include: {
+                class_enrollments: {
+                    include: {
+                        class: {
+                            include: {
+                                schedule: true,
+                                class_teachers: {
+                                    include: {
+                                        teacher: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!student) {
+            throw new NotFoundException('Student not found');
+        }
+
+        // Extract schedules from class enrollments
+        const schedules = student.class_enrollments.flatMap(
+            (enrollment) =>
+            enrollment.class.schedule.map((schedule) => ({
+                ...schedule,
+                class_name: enrollment.class.name,
+                teacher: enrollment.class.class_teachers.map((ct => ({
+                    id: ct.teacher.id,
+                    full_name: ct.teacher.full_name,
+                }))),
+            }))
+        );
+
+        if (schedules.length === 0) {
+            throw new NotFoundException('No schedules found for the student');
+        }
+
+        return schedules;
+    }
 }
