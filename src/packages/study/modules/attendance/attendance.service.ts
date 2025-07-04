@@ -94,9 +94,7 @@ export class AttendanceService {
                         },
                     },
                 },
-                student: {
-                    select: { full_name: true, id: true },
-                },
+                student: true
             },
             orderBy: { recorded_at: 'desc' }, // Order by recorded_at in descending order
             skip: skip,

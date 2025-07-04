@@ -29,7 +29,9 @@ import { StudentStatisticService } from './student-statistic.service';
 @UseGuards(AuthGuard)
 @Controller('student-statistics')
 export class StudentStatisticController {
-    constructor(private readonly studentStatisticService: StudentStatisticService) {}
+    constructor(
+        private readonly studentStatisticService: StudentStatisticService
+    ) {}
 
     @ApiOperation({ summary: 'Create a new student statistic' })
     @ApiResponse({
@@ -38,106 +40,19 @@ export class StudentStatisticController {
     })
     @ApiResponse({
         status: 409,
-        description: 'Conflict: Student statistic already exists for this period',
+        description:
+            'Conflict: Student statistic already exists for this period',
     })
     @Post()
     async createStudentStatistic(
-        @Body() createStudentStatisticDto: CreateStudentStatisticDto,
+        @Body() createStudentStatisticDto: CreateStudentStatisticDto
     ) {
-        return this.studentStatisticService.createStudentStatistic(createStudentStatisticDto);
+        return this.studentStatisticService.createStudentStatistic(
+            createStudentStatisticDto
+        );
     }
 
-    @ApiOperation({ summary: 'Update an existing student statistic' })
-    @ApiResponse({
-        status: 200,
-        description: 'Student statistic successfully updated',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Student statistic not found',
-    })
-    @ApiResponse({
-        status: 409,
-        description: 'Conflict: Student statistic already exists for this period',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Student statistic ID',
-        type: 'string',
-    })
-    @Put(':id')
-    async updateStudentStatistic(
-        @Param('id') id: string,
-        @Body() updateStudentStatisticDto: UpdateStudentStatisticDto,
-    ) {
-        return this.studentStatisticService.updateStudentStatistic(id, updateStudentStatisticDto);
-    }
-
-    @ApiOperation({ summary: 'Get a student statistic by ID' })
-    @ApiResponse({
-        status: 200,
-        description: 'Student statistic found',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Student statistic not found',
-    })
-    @ApiParam({
-        name: 'id',
-        description: 'Student statistic ID',
-        type: 'string',
-    })
-    @Get(':id')
-    async getStudentStatisticById(@Param('id') id: string) {
-        return this.studentStatisticService.getStudentStatisticById(id);
-    }
-
-    @ApiOperation({ summary: 'Get all student statistics' })
-    @ApiResponse({
-        status: 200,
-        description: 'List of student statistics',
-    })
-    @ApiQuery({
-        name: 'year',
-        description: 'Filter by year',
-        required: false,
-        type: 'number',
-    })
-    @ApiQuery({
-        name: 'month',
-        description: 'Filter by month',
-        required: false,
-        type: 'number',
-    })
-    @ApiQuery({
-        name: 'startYear',
-        description: 'Start year for range filter',
-        required: false,
-        type: 'number',
-    })
-    @ApiQuery({
-        name: 'endYear',
-        description: 'End year for range filter',
-        required: false,
-        type: 'number',
-    })
-    @Get()
-    async getAllStudentStatistics(
-        @Query('year') year?: number,
-        @Query('month') month?: number,
-        @Query('startYear') startYear?: number,
-        @Query('endYear') endYear?: number,
-    ) {
-        const query = {
-            year: year ? Number(year) : undefined,
-            month: month ? Number(month) : undefined,
-            startYear: startYear ? Number(startYear) : undefined,
-            endYear: endYear ? Number(endYear) : undefined,
-        };
-
-        return this.studentStatisticService.getAllStudentStatistics(query);
-    }
-
+    // Move the /range route BEFORE the general GET route
     @ApiOperation({ summary: 'Get student statistics by date range' })
     @ApiResponse({
         status: 200,
@@ -172,14 +87,110 @@ export class StudentStatisticController {
         @Query('startYear') startYear: number,
         @Query('endYear') endYear: number,
         @Query('startMonth') startMonth?: number,
-        @Query('endMonth') endMonth?: number,
+        @Query('endMonth') endMonth?: number
     ) {
         return this.studentStatisticService.getStudentStatisticsByDateRange(
             Number(startYear),
             Number(endYear),
             startMonth ? Number(startMonth) : undefined,
-            endMonth ? Number(endMonth) : undefined,
+            endMonth ? Number(endMonth) : undefined
         );
+    }
+
+    @ApiOperation({ summary: 'Get all student statistics' })
+    @ApiResponse({
+        status: 200,
+        description: 'List of student statistics',
+    })
+    @ApiQuery({
+        name: 'year',
+        description: 'Filter by year',
+        required: false,
+        type: 'number',
+    })
+    @ApiQuery({
+        name: 'month',
+        description: 'Filter by month',
+        required: false,
+        type: 'number',
+    })
+    @ApiQuery({
+        name: 'startYear',
+        description: 'Start year for range filter',
+        required: false,
+        type: 'number',
+    })
+    @ApiQuery({
+        name: 'endYear',
+        description: 'End year for range filter',
+        required: false,
+        type: 'number',
+    })
+    @Get()
+    async getAllStudentStatistics(
+        @Query('year') year?: string,
+        @Query('month') month?: string,
+        @Query('startYear') startYear?: string,
+        @Query('endYear') endYear?: string
+    ) {
+        const query = {
+            year: year ? Number(year) : undefined,
+            month: month ? Number(month) : undefined,
+            startYear: startYear ? Number(startYear) : undefined,
+            endYear: endYear ? Number(endYear) : undefined,
+        };
+
+        return this.studentStatisticService.getAllStudentStatistics(query);
+    }
+
+    @ApiOperation({ summary: 'Update an existing student statistic' })
+    @ApiResponse({
+        status: 200,
+        description: 'Student statistic successfully updated',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Student statistic not found',
+    })
+    @ApiResponse({
+        status: 409,
+        description:
+            'Conflict: Student statistic already exists for this period',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Student statistic ID',
+        type: 'string',
+    })
+    @Put(':id')
+    async updateStudentStatistic(
+        @Param('id') id: string,
+        @Body() updateStudentStatisticDto: UpdateStudentStatisticDto
+    ) {
+        return this.studentStatisticService.updateStudentStatistic(
+            id,
+            updateStudentStatisticDto
+        );
+    }
+
+    // Move the :id route to the end to avoid conflicts
+    @ApiOperation({ summary: 'Get a student statistic by ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Student statistic found',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Student statistic not found',
+    })
+    @ApiParam({
+        name: 'id',
+        description: 'Student statistic ID',
+        type: 'string',
+    })
+    @Get(':id')
+    async getStudentStatisticById(@Param('id') id: string) {
+        return this.studentStatisticService.getStudentStatisticById(id);
     }
 
     @ApiOperation({ summary: 'Delete a student statistic' })

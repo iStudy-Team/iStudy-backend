@@ -348,7 +348,7 @@ export class ScheduleService {
 
     async getScheduleByStudentId(userId: string) {
         // Check if the student exists
-        const student = await this.prisma.student.findMany({
+        const students = await this.prisma.student.findMany({
             where: { user_id: userId },
             include: {
                 class_enrollments: {
@@ -368,21 +368,23 @@ export class ScheduleService {
             },
         });
 
-        if (!student) {
+        if (!students || students.length === 0) {
             throw new NotFoundException('Student not found');
         }
 
-        // Extract schedules from class enrollments
-        const schedules = student.class_enrollments.flatMap(
-            (enrollment) =>
-            enrollment.class.schedule.map((schedule) => ({
-                ...schedule,
-                class_name: enrollment.class.name,
-                teacher: enrollment.class.class_teachers.map((ct => ({
-                    id: ct.teacher.id,
-                    full_name: ct.teacher.full_name,
-                }))),
-            }))
+        // Extract schedules from class enrollments of all students
+        const schedules = students.flatMap(student =>
+            student.class_enrollments.flatMap(
+                (enrollment: any) =>
+                enrollment.class.schedule.map((schedule: any) => ({
+                    ...schedule,
+                    class_name: enrollment.class.name,
+                    teacher: enrollment.class.class_teachers.map((ct: any) => ({
+                        id: ct.teacher.id,
+                        full_name: ct.teacher.full_name,
+                    })),
+                }))
+            )
         );
 
         if (schedules.length === 0) {

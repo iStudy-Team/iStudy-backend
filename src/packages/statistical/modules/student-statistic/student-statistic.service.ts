@@ -9,6 +9,7 @@ import {
 import { CreateStudentStatisticDto } from './dto/create-student-statistic.dto';
 import { UpdateStudentStatisticDto } from './dto/update-student-statistic.dto';
 import { StatisticQuery } from '../../types/statistical.types';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 @Injectable()
 export class StudentStatisticService {
@@ -17,7 +18,9 @@ export class StudentStatisticService {
         private readonly generateIdService: GenerateIdService
     ) {}
 
-    async createStudentStatistic(createStudentStatisticDto: CreateStudentStatisticDto) {
+    async createStudentStatistic(
+        createStudentStatisticDto: CreateStudentStatisticDto
+    ) {
         // Check if statistic already exists for this year and month
         const existingStatistic = await this.prisma.studentStatistic.findFirst({
             where: {
@@ -37,9 +40,11 @@ export class StudentStatisticService {
                 data: {
                     ...createStudentStatisticDto,
                     id: this.generateIdService.generateId(),
-                    total_students: createStudentStatisticDto.total_students ?? 0,
+                    total_students:
+                        createStudentStatisticDto.total_students ?? 0,
                     new_students: createStudentStatisticDto.new_students ?? 0,
-                    inactive_students: createStudentStatisticDto.inactive_students ?? 0,
+                    inactive_students:
+                        createStudentStatisticDto.inactive_students ?? 0,
                 },
             });
             return statistic;
@@ -53,11 +58,13 @@ export class StudentStatisticService {
 
     async updateStudentStatistic(
         id: string,
-        updateStudentStatisticDto: UpdateStudentStatisticDto,
+        updateStudentStatisticDto: UpdateStudentStatisticDto
     ) {
-        const existingStatistic = await this.prisma.studentStatistic.findUnique({
-            where: { id },
-        });
+        const existingStatistic = await this.prisma.studentStatistic.findUnique(
+            {
+                where: { id },
+            }
+        );
 
         if (!existingStatistic) {
             throw new NotFoundException('Student statistic not found');
@@ -65,17 +72,22 @@ export class StudentStatisticService {
 
         // Check if updating year/month would create a conflict
         if (updateStudentStatisticDto.year || updateStudentStatisticDto.month) {
-            const conflictingStatistic = await this.prisma.studentStatistic.findFirst({
-                where: {
-                    AND: [
-                        { id: { not: id } },
-                        {
-                            year: updateStudentStatisticDto.year ?? existingStatistic.year,
-                            month: updateStudentStatisticDto.month ?? existingStatistic.month,
-                        },
-                    ],
-                },
-            });
+            const conflictingStatistic =
+                await this.prisma.studentStatistic.findFirst({
+                    where: {
+                        AND: [
+                            { id: { not: id } },
+                            {
+                                year:
+                                    updateStudentStatisticDto.year ??
+                                    existingStatistic.year,
+                                month:
+                                    updateStudentStatisticDto.month ??
+                                    existingStatistic.month,
+                            },
+                        ],
+                    },
+                });
 
             if (conflictingStatistic) {
                 throw new ConflictException(
@@ -111,38 +123,85 @@ export class StudentStatisticService {
     }
 
     async getAllStudentStatistics(query?: StatisticQuery) {
-        const where: any = {};
+        const startYear = query?.startYear || query?.year || 2000;
+        const endYear =
+            query?.endYear || query?.year || new Date().getFullYear();
+        const startMonth = query?.month || 1;
+        const endMonth = query?.month || 12;
 
-        if (query?.year) {
-            where.year = query.year;
-        }
-
-        if (query?.month) {
-            where.month = query.month;
-        }
-
-        if (query?.startYear && query?.endYear) {
-            where.year = {
-                gte: query.startYear,
-                lte: query.endYear,
-            };
-        }
-
-        const statistics = await this.prisma.studentStatistic.findMany({
-            where,
-            orderBy: [
-                { year: 'desc' },
-                { month: 'desc' },
-            ],
+        const statistics = await this.prisma.user.findMany({
+            where: {
+                role: 2,
+                created_at: {
+                    gte: new Date(`${startYear}-01-01`),
+                    lte: new Date(`${endYear}-12-31`),
+                },
+            },
+            include: {
+                students: true,
+            },
         });
 
-        return statistics;
+        const results: Array<{
+            id: string;
+            year: number;
+            month: number;
+            total_students: number;
+            new_students: number;
+            inactive_students: number;
+            generated_at: string;
+        }> = [];
+
+        for (let year = startYear; year <= endYear; year++) {
+            for (let month = startMonth; month <= endMonth; month++) {
+                const monthStart = startOfMonth(new Date(year, month - 1));
+                const monthEnd = endOfMonth(new Date(year, month - 1));
+
+                const usersInMonth = statistics.filter((user) => {
+                    const createdAt = new Date(user.created_at);
+                    return createdAt >= monthStart && createdAt <= monthEnd;
+                });
+
+                let total_students = 0;
+                let new_students = 0;
+                let inactive_students = 0;
+
+                usersInMonth.forEach((user) => {
+                    const studentList = user.students || [];
+                    total_students += studentList.length;
+
+                    studentList.forEach((student) => {
+                        const createdAt = new Date(user.created_at);
+                        if (createdAt >= monthStart && createdAt <= monthEnd) {
+                            new_students++;
+                        }
+                        if (student.status === 0) {
+                            inactive_students++;
+                        }
+                    });
+                });
+
+                results.push({
+                    id: `${year}-${month}`, // tạo id theo tháng-năm
+                    year,
+                    month,
+                    total_students,
+                    new_students,
+                    inactive_students,
+                    generated_at: new Date().toISOString(),
+                });
+            }
+        }
+
+        return results;
     }
 
     async deleteStudentStatistic(id: string) {
-        const existingStatistic = await this.prisma.studentStatistic.findUnique({
-            where: { id },
-        });
+        const existingStatistic = await this.prisma.studentStatistic.findUnique(
+            {
+                where: { id },
+            }
+        );
 
         if (!existingStatistic) {
             throw new NotFoundException('Student statistic not found');
@@ -161,7 +220,12 @@ export class StudentStatisticService {
         }
     }
 
-    async getStudentStatisticsByDateRange(startYear: number, endYear: number, startMonth?: number, endMonth?: number) {
+    async getStudentStatisticsByDateRange(
+        startYear: number,
+        endYear: number,
+        startMonth?: number,
+        endMonth?: number
+    ) {
         const where: any = {
             year: {
                 gte: startYear,
@@ -205,10 +269,7 @@ export class StudentStatisticService {
 
         const statistics = await this.prisma.studentStatistic.findMany({
             where,
-            orderBy: [
-                { year: 'asc' },
-                { month: 'asc' },
-            ],
+            orderBy: [{ year: 'asc' }, { month: 'asc' }],
         });
 
         return statistics;
