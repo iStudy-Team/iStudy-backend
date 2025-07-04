@@ -120,4 +120,38 @@ export class ClassEnrollmentController {
     async remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
         return this.classEnrollmentService.delete(id, req.user);
     }
+
+    @Get('class/:classId/students')
+    @ApiOperation({ summary: 'Get students enrolled in a specific class' })
+    @ApiParam({ name: 'classId', type: String, description: 'Class ID' })
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+    @ApiResponse({
+        status: 200,
+        description: 'List of students enrolled in the class',
+    })
+    async getStudentsByClassId(
+        @Param('classId') classId: string,
+        @Query('page') page?: number,
+        @Query('limit') limit?: number
+    ) {
+        return this.classEnrollmentService.getStudentsByClassId(classId, page, limit);
+    }
+
+    @Get('class/:classId')
+    @ApiOperation({ summary: 'Get enrollments for a specific class' })
+    @ApiParam({ name: 'classId', type: String, description: 'Class ID' })
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
+    @ApiResponse({
+        status: 200,
+        description: 'List of enrollments for the class',
+    })
+    async getEnrollmentsByClassId(
+        @Param('classId') classId: string,
+        @Query('page') page?: number,
+        @Query('limit') limit?: number
+    ) {
+        return this.classEnrollmentService.getEnrollmentsByClassId(classId, page, limit);
+    }
 }

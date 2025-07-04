@@ -17,6 +17,7 @@ import {
     ApiBody,
     ApiParam,
     ApiTags,
+    ApiQuery,
 } from '@nestjs/swagger';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AuthenticatedRequest } from 'src/packages/auth/dto/request-width-auth.dto';
@@ -90,5 +91,61 @@ export class AttendanceController {
     })
     async getAttendanceById(@Param('id') id: string) {
         return this.attendanceService.findOne(id);
+    }
+
+    @Post('bulk/:classSessionId')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT')
+    @ApiOperation({ summary: 'Create bulk attendance records for a class session' })
+    @ApiParam({ name: 'classSessionId', required: true, description: 'Class Session ID' })
+    @ApiResponse({
+        status: 201,
+        description: 'Bulk attendance records created successfully',
+    })
+    async createBulkAttendance(
+        @Req() req: AuthenticatedRequest,
+        @Param('classSessionId') classSessionId: string,
+        @Body() attendanceRecords: Array<{
+            student_id: string;
+            status: number;
+            comment?: string;
+        }>
+    ) {
+        return this.attendanceService.createBulkAttendance(classSessionId, attendanceRecords, req.user);
+    }
+
+    @Get('class-session/:classSessionId')
+    @ApiOperation({ summary: 'Get attendance records for a specific class session' })
+    @ApiParam({ name: 'classSessionId', required: true, description: 'Class Session ID' })
+    @ApiResponse({
+        status: 200,
+        description: 'Attendance records for the class session',
+    })
+    async getAttendanceByClassSession(@Param('classSessionId') classSessionId: string) {
+        return this.attendanceService.findByClassSession(classSessionId);
+    }
+
+    @Get('stats')
+    @ApiOperation({ summary: 'Get attendance statistics' })
+    @ApiQuery({ name: 'classId', required: false, description: 'Filter by class ID' })
+    @ApiQuery({ name: 'studentId', required: false, description: 'Filter by student ID' })
+    @ApiQuery({ name: 'dateFrom', required: false, description: 'Start date filter (YYYY-MM-DD)' })
+    @ApiQuery({ name: 'dateTo', required: false, description: 'End date filter (YYYY-MM-DD)' })
+    @ApiResponse({
+        status: 200,
+        description: 'Attendance statistics',
+    })
+    async getAttendanceStats(
+        @Query('classId') classId?: string,
+        @Query('studentId') studentId?: string,
+        @Query('dateFrom') dateFrom?: string,
+        @Query('dateTo') dateTo?: string
+    ) {
+        return this.attendanceService.getAttendanceStats({
+            classId,
+            studentId,
+            dateFrom,
+            dateTo,
+        });
     }
 }

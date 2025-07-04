@@ -263,4 +263,126 @@ export class ClassEnrollmentService {
             );
         }
     }
+
+    async getStudentsByClassId(classId: string, page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+
+        // Check if the class exists
+        const classExists = await this.prisma.class.findUnique({
+            where: { id: classId },
+        });
+        if (!classExists) {
+            throw new NotFoundException(`Class not found`);
+        }
+
+        const enrollments = await this.prisma.class_Enrollment.findMany({
+            where: {
+                class_id: classId,
+                status: ClassEnrollmentStatusEnum.ACTIVE,
+            },
+            include: {
+                student: {
+                    select: {
+                        id: true,
+                        full_name: true,
+                        date_of_birth: true,
+                        gender: true,
+                        address: true,
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                phone: true,
+                                avatar: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                enrollment_date: 'desc',
+            },
+            skip,
+            take: limit,
+        });
+
+        // Get total count for pagination
+        const total = await this.prisma.class_Enrollment.count({
+            where: {
+                class_id: classId,
+                status: ClassEnrollmentStatusEnum.ACTIVE,
+            },
+        });
+
+        return {
+            data: enrollments.map(enrollment => enrollment.student),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
+    async getEnrollmentsByClassId(classId: string, page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+
+        // Check if the class exists
+        const classExists = await this.prisma.class.findUnique({
+            where: { id: classId },
+        });
+        if (!classExists) {
+            throw new NotFoundException(`Class not found`);
+        }
+
+        const enrollments = await this.prisma.class_Enrollment.findMany({
+            where: {
+                class_id: classId,
+            },
+            include: {
+                student: {
+                    select: {
+                        id: true,
+                        full_name: true,
+                        date_of_birth: true,
+                        gender: true,
+                        user: {
+                            select: {
+                                id: true,
+                                email: true,
+                                phone: true,
+                                avatar: true,
+                            },
+                        },
+                    },
+                },
+                class: {
+                    select: {
+                        id: true,
+                        name: true,
+                        status: true,
+                    },
+                },
+            },
+            orderBy: {
+                enrollment_date: 'desc',
+            },
+            skip,
+            take: limit,
+        });
+
+        // Get total count for pagination
+        const total = await this.prisma.class_Enrollment.count({
+            where: {
+                class_id: classId,
+            },
+        });
+
+        return {
+            data: enrollments,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
 }

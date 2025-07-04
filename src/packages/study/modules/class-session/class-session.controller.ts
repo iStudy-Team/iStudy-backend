@@ -8,6 +8,7 @@ import {
     UseGuards,
     Req,
     Delete,
+    Query,
 } from '@nestjs/common';
 import {
     ApiResponse,
@@ -17,6 +18,7 @@ import {
     ApiBody,
     ApiParam,
     ApiTags,
+    ApiQuery,
 } from '@nestjs/swagger';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AuthenticatedRequest } from 'src/packages/auth/dto/request-width-auth.dto';
@@ -71,13 +73,23 @@ export class ClassSessionController {
     }
 
     @Get()
-    @ApiOperation({ summary: 'Get all class sessions' })
+    @ApiOperation({ summary: 'Get class sessions with optional classId filter' })
+    @ApiQuery({ name: 'classId', required: false, description: 'Filter by class ID' })
+    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
     @ApiResponse({
         status: 200,
         description: 'List of class sessions',
         type: [CreateClassSessionDto],
     })
-    async findAllClassSessions() {
+    async findAllClassSessions(
+        @Query('classId') classId?: string,
+        @Query('page') page?: number,
+        @Query('limit') limit?: number
+    ) {
+        if (classId) {
+            return this.classSessionService.findByClassId(classId, page, limit);
+        }
         return this.classSessionService.findAll();
     }
 
@@ -107,5 +119,16 @@ export class ClassSessionController {
         @Req() req: AuthenticatedRequest
     ) {
         return this.classSessionService.remove(id, req.user);
+    }
+
+    @Get('/get-total/count')
+    @ApiOperation({ summary: 'Get total count of class sessions' })
+    @ApiResponse({
+        status: 200,
+        description: 'Total count of class sessions',
+        type: Number,
+    })
+    async getTotalClassSessionCount() {
+        return this.classSessionService.getTotalCount();
     }
 }

@@ -236,6 +236,25 @@ export class ClassService {
                         },
                     },
                 },
+                class_sessions: {
+                    include: {
+                        attendances: {
+                            include: {
+                                student: {
+                                    select: {
+                                        full_name: true,
+                                        id: true,
+                                    },
+                                },
+                            },
+                        },
+                        teacher: {
+                            include: {
+                                user: true,
+                            },
+                        },
+                    },
+                },
             },
         });
 
@@ -294,6 +313,25 @@ export class ClassService {
                                 },
                             },
                         },
+                    },
+                    class_sessions: {
+                        include: {
+                            attendances: {
+                                include: {
+                                    student: {
+                                        select: {
+                                            full_name: true,
+                                            id: true,
+                                        },
+                                    },
+                                },
+                            },
+                            teacher: {
+                                include: {
+                                    user: true,
+                                },
+                            },
+                        },
                     }
                 },
                 orderBy: {
@@ -333,6 +371,25 @@ export class ClassService {
                 class_enrollments: {
                     include: {
                         student: {
+                            include: {
+                                user: true,
+                            },
+                        },
+                    },
+                },
+                class_sessions: {
+                    include: {
+                        attendances: {
+                            include: {
+                                student: {
+                                    select: {
+                                        full_name: true,
+                                        id: true,
+                                    },
+                                },
+                            },
+                        },
+                        teacher: {
                             include: {
                                 user: true,
                             },

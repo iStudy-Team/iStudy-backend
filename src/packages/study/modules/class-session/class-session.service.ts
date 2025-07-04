@@ -17,7 +17,7 @@ export class ClassSessionService {
     ) {}
 
     async create(createClassSessionDto: CreateClassSessionDto, user: User) {
-        const { class_id } = createClassSessionDto;
+        const { class_id, date, start_time, end_time } = createClassSessionDto;
 
         // Check if the class exists
         const classExists = await this.prisma.class.findUnique({
@@ -33,23 +33,49 @@ export class ClassSessionService {
             );
         }
 
+        // Validate and parse dates
+        let sessionDate = new Date();
+        let sessionStartTime = new Date();
+        let sessionEndTime = new Date();
+
+        if (date) {
+            sessionDate = new Date(date);
+            if (isNaN(sessionDate.getTime())) {
+                throw new InternalServerErrorException('Invalid date format');
+            }
+        }
+
+        if (start_time) {
+            sessionStartTime = new Date(start_time);
+            if (isNaN(sessionStartTime.getTime())) {
+                throw new InternalServerErrorException('Invalid start time format');
+            }
+        }
+
+        if (end_time) {
+            sessionEndTime = new Date(end_time);
+            if (isNaN(sessionEndTime.getTime())) {
+                throw new InternalServerErrorException('Invalid end time format');
+            }
+        }
+
+        // Validate that start time is before end time
+        if (start_time && end_time && sessionStartTime >= sessionEndTime) {
+            throw new InternalServerErrorException('Start time must be before end time');
+        }
+
         try {
             return this.prisma.class_Session.create({
                 data: {
                     ...createClassSessionDto,
                     id: this.generateIdService.generateId(),
-                    date: createClassSessionDto.date
-                        ? new Date(createClassSessionDto.date)
-                        : new Date(),
-                    start_time: createClassSessionDto.start_time
-                        ? new Date(createClassSessionDto.start_time)
-                        : new Date(),
-                    end_time: createClassSessionDto.end_time
-                        ? new Date(createClassSessionDto.end_time)
-                        : new Date(),
+                    date: sessionDate,
+                    start_time: sessionStartTime,
+                    end_time: sessionEndTime,
                 },
             });
         } catch (error) {
+            console.error('Error creating class session:', error);
             throw new InternalServerErrorException(
                 `Failed to create class session`
             );
@@ -63,11 +89,6 @@ export class ClassSessionService {
             },
             include: {
                 class: {
-                    select: {
-                        id: true,
-                        name: true,
-                        status: true,
-                    },
                     include: {
                         class_enrollments: {
                             include: {
@@ -96,11 +117,6 @@ export class ClassSessionService {
             where: { id },
             include: {
                 class: {
-                    select: {
-                        id: true,
-                        name: true,
-                        status: true,
-                    },
                     include: {
                         class_enrollments: {
                             include: {
@@ -181,5 +197,38 @@ export class ClassSessionService {
                 `Failed to delete class session`
             );
         }
+    }
+
+    async findByClassId(classId: string, page: number = 1, limit: number = 10) {
+        const skip = (page - 1) * limit;
+
+        return this.prisma.class_Session.findMany({
+            where: {
+                class_id: classId,
+            },
+            orderBy: {
+                date: 'desc',
+            },
+            include: {
+                class: true,
+                attendances: {
+                    include: {
+                        student: {
+                            select: {
+                                full_name: true,
+                                id: true,
+                            },
+                        },
+                    },
+                },
+                teacher: true,
+            },
+            skip,
+            take: limit,
+        });
+    }
+
+    async getTotalCount() {
+        return this.prisma.class_Session.count();
     }
 }
