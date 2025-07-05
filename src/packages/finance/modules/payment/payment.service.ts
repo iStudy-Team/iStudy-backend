@@ -22,11 +22,6 @@ export class PaymentService {
     ) {}
 
     async create(createPaymentDto: CreatePaymentDto, user: User) {
-        if (user.role !== 4) {
-            throw new ForbiddenException(
-                'You do not have permission to create a payment'
-            );
-        }
 
         const existingPayment = await this.prisma.invoice.findUnique({
             where: { id: createPaymentDto.invoice_id },
@@ -44,28 +39,7 @@ export class PaymentService {
             throw new NotFoundException('Invoice not found');
         }
 
-        if (existingPayment?.status === InvoiceStatusEnum.UNPAID) {
-            const dataQR = await this.sePayService.createQR(
-                Number(invoice.final_amount),
-                existingPayment.id
-            );
-
-            return {
-                ...existingPayment,
-                invoice: {
-                    id: invoice.id,
-                    student_id: invoice.student_id,
-                    status: invoice.status,
-                    final_amount: invoice.final_amount,
-                },
-                receivedBy: {
-                    id: user.id,
-                    username: user.username,
-                },
-                dataQR,
-            };
-        }
-        try {
+          try {
             const payment = await this.prisma.payment.create({
                 data: {
                     ...createPaymentDto,

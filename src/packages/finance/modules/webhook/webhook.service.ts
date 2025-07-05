@@ -56,6 +56,8 @@ export class WebhookService {
             },
         });
 
+        console.log(`Payment ${paymentId} processed successfully with amount ${amountIn}`);
+
         if (payment.amount.equals(payment.invoice.final_amount)) {
             await this.prisma.invoice.update({
                 where: { id: payment.invoice_id },

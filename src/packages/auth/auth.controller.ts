@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -8,9 +8,12 @@ import {
     ApiOperation,
     ApiResponse,
     ApiExtraModels,
+    ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RequestPasswordDto } from './dto/send-email-forgot-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { AuthGuard } from 'src/common/guard/auth.guard';
+import { AuthenticatedRequest } from 'src/packages/auth/dto/request-width-auth.dto';
 
 @ApiTags('Auth')
 @ApiExtraModels(RegisterDto)
@@ -57,5 +60,18 @@ export class AuthController {
     @Post('verify-otp')
     async verifyOtp(@Body() verifyOtpDto: VerifyOtpDto) {
         return this.authService.verifyOtpAndResetPassword(verifyOtpDto);
+    }
+
+    // get infor me
+    @ApiOperation({ summary: 'Get user information' })
+    @ApiBearerAuth('JWT')
+     @UseGuards(AuthGuard)
+    @ApiResponse({
+        status: 200,
+        description: 'User information retrieved successfully',
+    })
+    @Get('me')
+    async me(@Req() req: AuthenticatedRequest) {
+        return this.authService.getInforMe(req.user.id);
     }
 }

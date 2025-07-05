@@ -195,7 +195,7 @@ CREATE TABLE Invoice (
     id VARCHAR(255) PRIMARY KEY,
     student_id VARCHAR(255) NOT NULL,
     class_id VARCHAR(255) NOT NULL,
-    invoice_number VARCHAR(50) UNIQUE NOT NULL,
+    invoice_number VARCHAR(50) NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,

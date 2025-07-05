@@ -9,9 +9,10 @@ import { FinanceModule } from './packages/finance/finance.module';
 import { NotificationModule } from './packages/notification/notification.module';
 import { StatisticalModule } from './packages/statistical/statistical.module';
 import { ActivityModule } from './packages/activity/activity.module';
+import { UploadModule } from './packages/upload/upload.module';
 
 @Module({
-    imports: [AuthModule, UserModule, StudyModule, FinanceModule, NotificationModule, StatisticalModule, ActivityModule],
+    imports: [AuthModule, UserModule, StudyModule, FinanceModule, NotificationModule, StatisticalModule, ActivityModule, UploadModule],
     providers: [PrismaService, AppService],
     controllers: [AppController],
 })

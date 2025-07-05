@@ -31,7 +31,7 @@ export class RelationService {
 
         // Check if parent exists
         const parent = await this.prisma.parent.findFirst({
-            where: { id: createRelationDto.parent_id },
+            where: { user_id: createRelationDto.parent_id },
         });
 
         if (!parent) {
@@ -42,7 +42,7 @@ export class RelationService {
         const existingRelation = await this.prisma.student_Parent_Relation.findFirst({
             where: {
                 student_id: createRelationDto.student_id,
-                parent_id: createRelationDto.parent_id,
+                parent_id: parent.id,
             },
         });
 
@@ -67,6 +67,7 @@ export class RelationService {
             const relation = await this.prisma.student_Parent_Relation.create({
                 data: {
                     ...createRelationDto,
+                    parent_id: parent.id,
                     id: this.generateIdService.generateId(),
                 },
                 include: {
@@ -310,8 +311,14 @@ export class RelationService {
     }
 
     async getRelationsByParentId(parentId: string) {
+        const parent = await this.prisma.parent.findFirst({
+            where: { user_id: parentId },
+        });
+        if (!parent) {
+            throw new NotFoundException('Parent not found');
+        }
         const relations = await this.prisma.student_Parent_Relation.findMany({
-            where: { parent_id: parentId },
+            where: { parent_id: parent.id },
             include: {
                 student: {
                     select: {

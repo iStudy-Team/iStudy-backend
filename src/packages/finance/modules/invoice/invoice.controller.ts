@@ -73,7 +73,7 @@ export class InvoiceController {
         );
     }
 
-    @Get(':studentId')
+    @Get('get-by-student/:studentId')
     @UseGuards(AuthGuard)
     @ApiBearerAuth('JWT')
     @ApiParam({ name: 'studentId', required: true, description: 'Student ID' })
@@ -84,6 +84,24 @@ export class InvoiceController {
         type: [CreateInvoiceDto],
     })
     async getAllInvoices(
+        @Req() req: AuthenticatedRequest,
+        @Param('studentId') studentId: string,
+        @Body() searchParams?: SearchInvoicesDto
+    ) {
+        return this.invoiceService.findAll(studentId, req.user, searchParams);
+    }
+
+     @Get('all')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT')
+    @ApiParam({ name: 'studentId', required: true, description: 'Student ID' })
+    @ApiOperation({ summary: 'Get all invoices for a student' })
+    @ApiResponse({
+        status: 200,
+        description: 'Invoices retrieved successfully',
+        type: [CreateInvoiceDto],
+    })
+    async getAllInvoices1(
         @Req() req: AuthenticatedRequest,
         @Param('studentId') studentId: string,
         @Body() searchParams?: SearchInvoicesDto
@@ -109,8 +127,9 @@ export class InvoiceController {
         return this.invoiceService.update(id, updateInvoiceDto);
     }
 
-    @Get('get-by-id/:id&student_id')
+    @Get('get-by-id/:id/:student_id')
     @ApiParam({ name: 'id', required: true, description: 'Invoice ID' })
+    @ApiParam({ name: 'student_id', required: true, description: 'Student ID' })
     @ApiOperation({ summary: 'Get invoice by ID' })
     @UseGuards(AuthGuard)
     @ApiBearerAuth('JWT')

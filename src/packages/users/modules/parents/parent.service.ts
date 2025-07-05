@@ -78,7 +78,7 @@ export class ParentService {
 
     async getParentById(id: string) {
         const parent = await this.prisma.parent.findFirst({
-            where: { id },
+            where: { user_id: id },
         });
 
         if (!parent) {

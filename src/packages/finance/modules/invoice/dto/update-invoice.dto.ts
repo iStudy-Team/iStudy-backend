@@ -28,12 +28,6 @@ export const UpdateInvoiceSchema = z.object({
             message: 'Discount amount must be a positive number',
         })
         .optional(),
-    final_amount: z
-        .number()
-        .min(0, {
-            message: 'Final amount must be a positive number',
-        })
-        .optional(),
     issue_date: z
         .string()
         .optional()
@@ -124,13 +118,6 @@ export class UpdateInvoiceDto extends createZodDto(UpdateInvoiceSchema) {
         required: false,
     })
     discount_amount?: number;
-
-    @ApiProperty({
-        description: 'Final amount after discounts',
-        type: Number,
-        required: false,
-    })
-    final_amount?: number;
 
     @ApiProperty({
         description: 'Issue date of the invoice in ISO format',

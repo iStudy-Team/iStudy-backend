@@ -26,7 +26,26 @@ export class InvoiceService {
                 'You do not have permission to create an invoice'
             );
         }
+
+        const studentExists = await this.prisma.student.findFirst({
+            where: { id: createInvoiceDto.student_id },
+            include: {
+                user: true,
+            },
+        });
+
+        if (!studentExists) {
+            throw new NotFoundException('Student not found');
+        }
+
         try {
+            // Calculate final amount using the utility method
+            const finalAmount = this.calculateFinalAmount(
+                createInvoiceDto.amount,
+                createInvoiceDto?.discount_amount || 0,
+                studentExists.discount_percentage?.toNumber() || 0
+            );
+
             const invoice = await this.prisma.invoice.create({
                 data: {
                     ...createInvoiceDto,
@@ -41,7 +60,7 @@ export class InvoiceService {
                               date.setDate(date.getDate() + 30);
                               return date;
                           })(),
-                    final_amount: createInvoiceDto.final_amount || 0,
+                    final_amount: finalAmount,
                 },
             });
             return invoice;
@@ -55,9 +74,9 @@ export class InvoiceService {
         user: User,
         searchParams?: SearchInvoicesDto
     ) {
-        const { page, limit } = searchParams || { page: 1, limit: 10 };
+        const { page, limit } = searchParams || { page: 1, limit: 100 };
         try {
-            const skip = (page || 1 - 1) * (limit || 10);
+            const skip = ((page || 1) - 1) * (limit || 100);
             const take = limit;
             if (user.role !== 4) {
                 const invoices = await this.prisma.invoice.findMany({
@@ -77,11 +96,6 @@ export class InvoiceService {
                             },
                         },
                         payments: {
-                            select: {
-                                id: true,
-                                amount: true,
-                                payment_date: true,
-                            },
                             include: {
                                 receivedBy: {
                                     select: {
@@ -107,18 +121,8 @@ export class InvoiceService {
                     skip,
                     take,
                     include: {
-                        student: {
-                            select: {
-                                id: true,
-                                full_name: true,
-                            },
-                        },
+                        student: true,
                         payments: {
-                            select: {
-                                id: true,
-                                amount: true,
-                                payment_date: true,
-                            },
                             include: {
                                 receivedBy: {
                                     select: {
@@ -138,6 +142,7 @@ export class InvoiceService {
                 };
             }
         } catch (error) {
+            console.error('Error retrieving invoices:', error);
             throw new InternalServerErrorException(
                 'Failed to retrieve invoices'
             );
@@ -145,21 +150,12 @@ export class InvoiceService {
     }
 
     async findOne(id: string, user: User, student_id: string) {
-        const invoice = await this.prisma.invoice.findUnique({
+        try {
+            const invoice = await this.prisma.invoice.findUnique({
             where: { id },
             include: {
-                student: {
-                    select: {
-                        id: true,
-                        full_name: true,
-                    },
-                },
+                student: true,
                 payments: {
-                    select: {
-                        id: true,
-                        amount: true,
-                        payment_date: true,
-                    },
                     include: {
                         receivedBy: {
                             select: {
@@ -180,20 +176,53 @@ export class InvoiceService {
             );
         }
         return invoice;
+        } catch (error) {
+            console.error('Error retrieving invoice:', error);
+            throw new InternalServerErrorException('Failed to retrieve invoice');
+        }
     }
 
     async update(id: string, updateInvoiceDto: UpdateInvoiceDto) {
         const existingInvoice = await this.prisma.invoice.findUnique({
             where: { id },
+            include: {
+                student: {
+                    select: {
+                        id: true,
+                        discount_percentage: true,
+                    },
+                },
+            },
         });
         if (!existingInvoice) {
             throw new NotFoundException('Invoice not found');
         }
 
         try {
+            // Calculate final amount using the utility method
+            const originalAmount =
+                updateInvoiceDto.amount ||
+                existingInvoice.amount?.toNumber() ||
+                0;
+            const invoiceDiscountPercentage =
+                updateInvoiceDto?.discount_amount ||
+                existingInvoice.discount_amount?.toNumber() ||
+                0;
+            const studentDiscountPercentage =
+                existingInvoice.student.discount_percentage?.toNumber() || 0;
+
+            const finalAmount = this.calculateFinalAmount(
+                originalAmount,
+                invoiceDiscountPercentage,
+                studentDiscountPercentage
+            );
+
             const updatedInvoice = await this.prisma.invoice.update({
                 where: { id },
-                data: updateInvoiceDto,
+                data: {
+                    ...updateInvoiceDto,
+                    final_amount: finalAmount,
+                },
             });
             return updatedInvoice;
         } catch (error) {
@@ -218,38 +247,51 @@ export class InvoiceService {
             include: {
                 class_enrollments: {
                     include: {
-                        student: true,
+                        student: {
+                            select: {
+                                id: true,
+                                discount_percentage: true,
+                            },
+                        },
                     },
                 },
             },
         });
 
-        const studentIds = classes.flatMap((classItem) =>
-            classItem.class_enrollments.map(
-                (enrollment) => enrollment.student.id
-            )
+        const students = classes.flatMap((classItem) =>
+            classItem.class_enrollments.map((enrollment) => enrollment.student)
         );
 
-        if (studentIds.length === 0) {
+        if (students.length === 0) {
             throw new NotFoundException('No students found for the class');
         }
 
-        const invoices = studentIds.map((studentId) => ({
-            ...createMutipleInvoiceDto,
-            id: this.generateIdService.generateId(),
-            student_id: studentId,
-            issue_date: createMutipleInvoiceDto.issue_date
-                ? new Date(createMutipleInvoiceDto.issue_date)
-                : new Date(),
-            due_date: createMutipleInvoiceDto.due_date
-                ? new Date(createMutipleInvoiceDto.due_date)
-                : (() => {
-                      const date = new Date();
-                      date.setDate(date.getDate() + 30);
-                      return date;
-                  })(),
-            final_amount: createMutipleInvoiceDto.final_amount || 0,
-        }));
+        const invoices = students.map((student, index) => {
+            // Calculate final amount using the utility method
+            const finalAmount = this.calculateFinalAmount(
+                createMutipleInvoiceDto.amount,
+                createMutipleInvoiceDto?.discount_amount || 0,
+                student.discount_percentage?.toNumber() || 0
+            );
+
+            return {
+                ...createMutipleInvoiceDto,
+                id: this.generateIdService.generateId(),
+                student_id: student.id,
+                issue_date: createMutipleInvoiceDto.issue_date
+                    ? new Date(createMutipleInvoiceDto.issue_date)
+                    : new Date(),
+                invoice_number: `${createMutipleInvoiceDto.invoice_number}-${index + 1}`,
+                due_date: createMutipleInvoiceDto.due_date
+                    ? new Date(createMutipleInvoiceDto.due_date)
+                    : (() => {
+                          const date = new Date();
+                          date.setDate(date.getDate() + 30);
+                          return date;
+                      })(),
+                final_amount: finalAmount,
+            };
+        });
 
         try {
             const createdInvoices = await this.prisma.invoice.createMany({
@@ -257,11 +299,43 @@ export class InvoiceService {
             });
             return {
                 message: `${createdInvoices.count} invoices created successfully`,
+                invoices: invoices.map((invoice) => ({
+                    ...invoice,
+                    final_amount: this.calculateFinalAmount(
+                        invoice.amount,
+                        invoice.discount_amount || 0,
+                        students.find((s) => s.id === invoice.student_id)
+                            ?.discount_percentage?.toNumber() || 0
+                    ),
+                })),
             };
         } catch (error) {
             throw new InternalServerErrorException(
                 'Failed to create multiple invoices'
             );
         }
+    }
+
+    /**
+     * Calculate final invoice amount after applying discounts
+     * @param originalAmount - The base amount before discounts
+     * @param invoiceDiscountPercentage - Invoice-specific discount percentage (stored as discount_amount in DB)
+     * @param studentDiscountPercentage - Student-specific discount percentage
+     * @returns Final amount after both discounts are applied
+     */
+    private calculateFinalAmount(
+        originalAmount: number,
+        invoiceDiscountPercentage: number = 0,
+        studentDiscountPercentage: number = 0
+    ): number {
+        const invoiceDiscountAmount =
+            (originalAmount * invoiceDiscountPercentage) / 100;
+        const studentDiscountAmount =
+            (originalAmount * studentDiscountPercentage) / 100;
+        const finalAmount =
+            originalAmount - invoiceDiscountAmount - studentDiscountAmount;
+
+        // Ensure final amount is not negative
+        return Math.max(0, finalAmount);
     }
 }
